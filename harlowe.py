@@ -4,10 +4,6 @@ from __future__ import print_function
 
 import re
 import xml.etree.ElementTree as ET
-try:
-    import HTMLParser
-except ImportError:
-    import html.parser as HTMLParser
 
 try:
     basestring
@@ -379,19 +375,6 @@ class TwineRoom:
 
     def parse_contents(self):
         self.parsed_contents = tokenize(self.contents)[0]
-
-    # todo this may not be needed -- xml parser may scrub escaped chars already
-    def unescape(self):
-        h = HTMLParser.HTMLParser()
-
-        old_name = self.name
-        self.pid = h.unescape(self.pid)
-        self.name = h.unescape(self.name)
-        self.contents = h.unescape(self.contents)
-
-        if self.name != old_name:
-            return old_name
-        return None
 
 
 def parse_twine_xml(s):
