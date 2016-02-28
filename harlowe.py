@@ -1,15 +1,11 @@
 # coding: utf-8
-from __future__ import unicode_literals
-from __future__ import print_function
+from __future__ import division, unicode_literals, print_function
+from six import text_type
 
 import re
 import html5lib
 import xml.etree.ElementTree as etree
 
-try:
-    basestring
-except NameError:
-    basestring = str
 
 
 passage_tag = 'tw-passagedata'
@@ -50,7 +46,7 @@ def compile_re(pattern):
 # item and the last item in the array are strings, by appending the new string to
 # the last one
 def append_with_string_merge(seq, new_item):
-    if seq and isinstance(new_item, basestring) and isinstance(seq[-1], basestring):
+    if seq and isinstance(new_item, text_type) and isinstance(seq[-1], text_type):
         s = seq.pop()
         seq.append(s+new_item)
     else:
@@ -59,7 +55,7 @@ def append_with_string_merge(seq, new_item):
 
 # todo debug
 def code_str(item):
-    if isinstance(item, basestring):
+    if isinstance(item, text_type):
         return item
     return item.code_str()
 
@@ -230,7 +226,7 @@ def parse_link(match, s):
         link = TwineLink(tokenized_desc, tokenized_dest)
 
     # TODO is there a limitation on what the link's description can be? Check Harlowe source
-    if len(link.link_text) != 1 or not isinstance(link.link_text[0], basestring):
+    if len(link.link_text) != 1 or not isinstance(link.link_text[0], text_type):
         raise RuntimeError("Link didn't have a plain text link: [["+link_match.group(0))
     link.link_text = link.link_text[0]
     return [link], s[link_match.end(0):]
@@ -387,8 +383,8 @@ def parse_twine_html(s):
     title = story_elem.attrib['name']
     startpid = story_elem.attrib['startnode']
 
-    for passage_elem in root.iter(passage_tag):
         passage = TwineRoom(passage_elem.attrib['pid'], passage_elem.attrib['name'], passage_elem.text)
+    for passage_elem in story_elem.iter(PASSAGE_TAG):
         passages[passage.name] = passage
 
     return title, startpid, passages
