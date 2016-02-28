@@ -3,7 +3,8 @@ from __future__ import unicode_literals
 from __future__ import print_function
 
 import re
-import xml.etree.ElementTree as ET
+import html5lib
+import xml.etree.ElementTree as etree
 
 try:
     basestring
@@ -12,8 +13,6 @@ except NameError:
 
 
 passage_tag = 'tw-passagedata'
-
-story_re = re.compile('<tw-storydata.+?name="([^"]+?)".+?startnode="([^"]+?)".+?>')
 
 # These patterns are taken from the Harlowe source (js/markup/Patterns.js)
 # The letters and whitespace patterns include unicode characters. Since they're spelled out
@@ -377,21 +376,16 @@ class TwineRoom:
         self.parsed_contents = tokenize(self.contents)[0]
 
 
-def parse_twine_xml(s):
+def parse_twine_html(s):
     passages = dict()
 
-    # The opening story tag contains a bare attribute, which
-    # isn't allowed in XML, so we process that tag using a regex (sigh)
-    # and then get rid of its attributes
-
-    story_info = story_re.search(s)
-    if not story_info:
+    # The story uses HTML5 custom elements, and so requires an HTML5-aware parser
+    full_doc = html5lib.parseFragment(s, namespaceHTMLElements=False)
+    story_elem = full_doc.find('tw-storydata')
+    if not story_elem:
         raise RuntimeError('No properly-formatted story tag (tw-storydata) found')
-    title, startpid = story_info.group(1, 2)
-
-    s = story_re.sub('<tw-storydata>', s)
-
-    root = ET.fromstring(s)
+    title = story_elem.attrib['name']
+    startpid = story_elem.attrib['startnode']
 
     for passage_elem in root.iter(passage_tag):
         passage = TwineRoom(passage_elem.attrib['pid'], passage_elem.attrib['name'], passage_elem.text)
@@ -429,7 +423,7 @@ def main():
     with open('Twinetest.txt', 'rt') as fh:
         contents = fh.read()
 
-    title, startpid, rooms = parse_twine_xml(contents)
+    title, startpid, rooms = parse_twine_html(contents)
 
     for name, room in rooms.items():
         room.parse_contents()
