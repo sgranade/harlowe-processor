@@ -53,6 +53,16 @@ def append_with_string_merge(seq, new_item):
         seq.append(new_item)
 
 
+def escape(s):
+    """Replace special HTML characters according to the rules Harlowe/Twine uses."""
+    s = s.replace("&", "&amp;")
+    s = s.replace("<", "&lt;")
+    s = s.replace(">", "&gt;")
+    s = s.replace('"', "&quot;")
+    s = s.replace('\'', "&#39;")
+    return s
+
+
 # todo debug
 def code_str(item):
     if isinstance(item, text_type):
