@@ -444,31 +444,6 @@ def parse_twine_html(s):
     return title, startpid, passages
 
 
-def textify_contents(contents):
-    strings = []
-    variables = {}
-
-    for item in contents:
-        if isinstance(item, TwineHook):
-            strings.append(textify_contents(item.hook))
-        elif isinstance(item, TwineMacro):
-            if item.name == 'linkreveal':
-                quote_marks_re = compile_re(r'"(.*?)"')
-                quote_match = quote_marks_re.search(textify_contents(item.code))
-                if quote_match:
-                    strings.append(quote_match.group(1))
-            elif item.name == 'set':
-                pass # TODO accumulate variable definitions as we go
-        elif isinstance(item, TwineLink):
-            strings.append(item.link_text)
-        elif isinstance(item, TwineVariable):
-            strings.append(item.name)
-        else:
-            strings.append(item)
-
-    return ''.join(strings)
-
-
 def main():
     with open('Twinetest.txt', 'rt') as fh:
         contents = fh.read()
@@ -479,24 +454,12 @@ def main():
         room.parse_contents()
 
     for name, room in rooms.items():
-        #contents = tokenize(room.contents)[0]
+        print('----\n'+name+'\n'+''.join(escape_list(room.parsed_contents)))
         #print('----\n'+name+'\n'+''.join([code_str(s) for s in room.parsed_contents]))
         #print('----\n'+name+'\n'+textify_contents(room.parsed_contents))
-        print(textify_contents(room.parsed_contents))
         #break
 
     return
-
-    for name, room in rooms.items():
-        print('{}: {}'.format(name, room.get_plain_contents()))
-
-    for name, room in rooms.items():
-        missing_links = room.find_destinations(rooms)
-        for dest in room.destinations:
-            print('. {} -> {}'.format(room.name, dest.name))
-        if missing_links:
-            print('\n'.join(missing_links))
-        pass #new_name = room.
 
 if __name__ == '__main__':
     main()
