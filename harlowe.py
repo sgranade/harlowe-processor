@@ -27,7 +27,6 @@ variable_pattern = r'\$'+variable_name_pattern
 macro_name_pattern = r'((?P<name>[\w\-{0}\\/][\w\-{0}]*)|(?P<variable>{1})):'.format(unicode_letters_pattern,
                                                                                      variable_pattern)
 hook_tag_name_pattern = r'[\w\-{0}]*'.format(unicode_letters_pattern)
-# TODO this regex doesn't do the right thing with links like [a <- b <- c <- d]
 link_contents_pattern = r'((?P<desc1>[^]]+)\->(?P<dest1>[^]]+)|(?P<dest2>[^]]+?)<\-(?P<desc2>[^]]+)|(?P<contents>[^]]*))'
 
 
@@ -64,7 +63,13 @@ def escape(s):
 
 
 def escape_list(l):
-    """Replace special HTML characters for each item in the list that's a string, and convert non-string objects to strings"""
+    """Replace special HTML characters for each string item in the list, and convert non-strings to strings.
+
+    Calls the str() method on every object that isn't a string in the list to cast it to a string.
+
+    Args:
+        l: The list whose contents will be escaped or cast to strings.
+    """
     return [escape(item) if isinstance(item, text_type) else str(item) for item in l]
 
 
@@ -427,7 +432,7 @@ def tokenize(s, stop_token_pattern=None):
     return to_return
 
 
-def parse_twine_html(s):
+def parse_harlowe_html(s):
     passages = OrderedDict()  # So that we keep the original room order in source code
 
     # The story uses HTML5 custom elements, and so requires an HTML5-aware parser
@@ -443,24 +448,3 @@ def parse_twine_html(s):
         passages[passage.name] = passage
 
     return title, startpid, passages
-
-
-def main():
-    with open('Twinetest.txt', 'rt') as fh:
-        contents = fh.read()
-
-    title, startpid, rooms = parse_twine_html(contents)
-
-    for name, room in rooms.items():
-        room.parse_contents()
-
-    for name, room in rooms.items():
-        print('----\n'+name+'\n'+''.join(escape_list(room.parsed_contents)))
-        #print('----\n'+name+'\n'+''.join([code_str(s) for s in room.parsed_contents]))
-        #print('----\n'+name+'\n'+textify_contents(room.parsed_contents))
-        #break
-
-    return
-
-if __name__ == '__main__':
-    main()
