@@ -65,7 +65,7 @@ class TestTokenizingAndParsing:
 
         results, _, _ = tokenize(contents)
 
-        assert(None == results[0].name)
+        assert(None == results[0].nametag)
         assert(['this is a simple anonymous hook'] == results[0].hook)
 
 
@@ -110,7 +110,7 @@ class TestTokenizingAndParsing:
 
         assert(isinstance(macro_obj.name_in_source, TwineVariable))
         assert(isinstance(macro_obj.canonical_name, TwineVariable))
-        
+
 
     def test_hook_can_have_left_tag(self):
         contents = '|tag>[hook]'
@@ -118,7 +118,7 @@ class TestTokenizingAndParsing:
         results, _, _ = tokenize(contents)
 
         assert(isinstance(results[0], TwineHook))
-        assert('tag' == results[0].name)
+        assert('tag' == results[0].nametag)
         assert(['hook'] == results[0].hook)
 
 
@@ -128,7 +128,7 @@ class TestTokenizingAndParsing:
         results, _, _ = tokenize(contents)
 
         assert(isinstance(results[0], TwineHook))
-        assert('tag' == results[0].name)
+        assert('tag' == results[0].nametag)
 
 
     def test_hook_tag_can_have_hyphens(self):
@@ -137,7 +137,7 @@ class TestTokenizingAndParsing:
         results, _, _ = tokenize(contents)
 
         assert(isinstance(results[0], TwineHook))
-        assert('ca-age' == results[0].name)
+        assert('ca-age' == results[0].nametag)
 
 
     def test_hooks_can_contain_links(self):
@@ -187,6 +187,27 @@ class TestStringVersionOfObjects:
         macro_str = str(macro_obj)
 
         assert('(go-to: &quot;passage link&quot;)' == macro_str)
+
+
+    def test_string_version_of_a_hook_without_a_tag(self):
+        hook_obj = TwineHook(["simple text 'mkay?"])
+        hook_str = str(hook_obj)
+
+        assert('[simple text &#39;mkay?]' == hook_str)
+
+
+    def test_string_version_of_a_hook_with_a_right_tag(self):
+        hook_obj = TwineHook(["simple text 'mkay?"], 'right-tag', nametag_on_right=True)
+        hook_str = str(hook_obj)
+
+        assert('[simple text &#39;mkay?]&lt;right-tag|' == hook_str)
+
+
+    def test_string_version_of_a_hook_with_a_left_tag(self):
+        hook_obj = TwineHook(["simple text 'mkay?"], 'left-tag', nametag_on_right=False)
+        hook_str = str(hook_obj)
+
+        assert('|left-tag&gt;[simple text &#39;mkay?]' == hook_str)
 
 
 # ROUND-TRIPPING
@@ -261,3 +282,40 @@ class TestRoundTripping:
         new_passage_str = str(passage_obj)
 
         assert(passage_str == new_passage_str)
+
+
+    def test_parsing_and_round_tripping_anonymous_hook(self):
+        passage_str = '<tw-passagedata pid="1" name="Opening Scene" tags="40% fadein nosave" position="388,116">' \
+                      + 'Anonymous hook [ that only contains text ]' \
+                      + '</tw-passagedata>'
+
+        passage_obj = TwineRoom.from_string(passage_str)
+        passage_obj.parse_contents()
+        new_passage_str = str(passage_obj)
+
+        assert(passage_str == new_passage_str)
+
+
+    def test_parsing_and_round_tripping_hook_with_right_tag(self):
+        passage_str = '<tw-passagedata pid="1" name="Opening Scene" tags="40% fadein nosave" position="388,116">' \
+                      + 'Named hook [ that only contains text ]&lt;right tag|' \
+                      + '</tw-passagedata>'
+
+        passage_obj = TwineRoom.from_string(passage_str)
+        passage_obj.parse_contents()
+        new_passage_str = str(passage_obj)
+
+        assert(passage_str == new_passage_str)
+
+
+    def test_parsing_and_round_tripping_hook_with_left_tag(self):
+        passage_str = '<tw-passagedata pid="1" name="Opening Scene" tags="40% fadein nosave" position="388,116">' \
+                      + 'Named hook |left tag&gt;[ that only contains text ]' \
+                      + '</tw-passagedata>'
+
+        passage_obj = TwineRoom.from_string(passage_str)
+        passage_obj.parse_contents()
+        new_passage_str = str(passage_obj)
+
+        assert(passage_str == new_passage_str)
+

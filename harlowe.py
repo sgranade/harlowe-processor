@@ -179,19 +179,20 @@ class TwineMacro:
 
 hook_count = 0  # TODO DEBUG
 class TwineHook:
-    def __init__(self, name, hook, tag_on_right=False):
-        self.name = name
+    def __init__(self, hook, nametag=None, nametag_on_right=False):
         self.hook = hook
-        self.tag_on_left = tag_on_right
+        self.nametag = nametag
+        self.nametag_on_right = nametag_on_right
 
     def __str__(self):
-        str_list = []
-        if self.name:
-            str_list.append('|'+self.name+'>')
-        str_list.append('[')
-        for item in self.hook:
-            str_list.append(str(item))
+        str_list = ['[']
+        str_list.extend(escape_list(self.hook))
         str_list.append(']')
+        if self.nametag:
+            if self.nametag_on_right:
+                str_list.append('&lt;'+escape(self.nametag)+'|')
+            else:
+                str_list = ['|', escape(self.nametag), '&gt;'] + str_list
         return ''.join(str_list)
 
     # TODO DEBUG
@@ -199,8 +200,8 @@ class TwineHook:
         global hook_count
         str_list = ['H', str(hook_count)]
         hook_count += 1
-        if self.name:
-            str_list.append('|!'+self.name+'!>')
+        if self.nametag:
+            str_list.append('|!'+self.nametag+'!>')
         str_list.append('[')
         for item in self.hook:
             str_list.append(code_str(item))
@@ -230,18 +231,18 @@ def parse_variable(match, s):
 
 
 def parse_hook(match, s):
-    # Hooks can be named: |name>[hook] or [hook]<name|
+    # Hooks can be named: |nametag>[hook] or [hook]<nametag|
     # or can be anonymous: [hook]
     original_text = s
-    name = None
-    tag_on_right = False
+    nametag = None
+    nametag_on_right = False
     if match == '|':
         # Make sure this is an actual name tag
-        left_tag_re = compile_re(r'(?P<name>'+hook_tag_name_pattern+')>\[')
+        left_tag_re = compile_re(r'(?P<nametag>'+hook_tag_name_pattern+')>\[')
         tag_match = left_tag_re.match(s)
         if not tag_match:
             return [match], original_text
-        name = tag_match.group('name')
+        nametag = tag_match.group('nametag')
         s = s[tag_match.end(0):]
 
     hook_list, stop_token, s1 = tokenize(s, stop_token_pattern=r'\]<?')
@@ -251,17 +252,17 @@ def parse_hook(match, s):
 
     if stop_token == ']<':
         # We may have a name tag
-        right_tag_re = compile_re(r'(?P<name>'+hook_tag_name_pattern+')\|')
+        right_tag_re = compile_re(r'(?P<nametag>'+hook_tag_name_pattern+')\|')
         tag_match = right_tag_re.match(s1)
         if tag_match:
-            name = tag_match.group('name')
+            nametag = tag_match.group('nametag')
             s1 = s1[tag_match.end(0):]
-            tag_on_right = True
+            nametag_on_right = True
         else:
             # Put the < character back on
             s1 = '<'+s1
 
-    return [TwineHook(name, hook_list, tag_on_right)], s1
+    return [TwineHook(hook_list, nametag, nametag_on_right)], s1
 
 
 def parse_link(match, s):
