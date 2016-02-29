@@ -179,9 +179,10 @@ class TwineMacro:
 
 hook_count = 0  # TODO DEBUG
 class TwineHook:
-    def __init__(self, name, hook):
+    def __init__(self, name, hook, tag_on_right=False):
         self.name = name
         self.hook = hook
+        self.tag_on_left = tag_on_right
 
     def __str__(self):
         str_list = []
@@ -233,6 +234,7 @@ def parse_hook(match, s):
     # or can be anonymous: [hook]
     original_text = s
     name = None
+    tag_on_right = False
     if match == '|':
         # Make sure this is an actual name tag
         left_tag_re = compile_re(r'(?P<name>'+hook_tag_name_pattern+')>\[')
@@ -254,11 +256,12 @@ def parse_hook(match, s):
         if tag_match:
             name = tag_match.group('name')
             s1 = s1[tag_match.end(0):]
+            tag_on_right = True
         else:
             # Put the < character back on
             s1 = '<'+s1
 
-    return [TwineHook(name, hook_list)], s1
+    return [TwineHook(name, hook_list, tag_on_right)], s1
 
 
 def parse_link(match, s):
