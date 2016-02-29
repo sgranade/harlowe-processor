@@ -3,6 +3,7 @@ from __future__ import division, unicode_literals, print_function
 from six import text_type
 
 import re
+from collections import OrderedDict
 import html5lib
 import xml.etree.ElementTree as etree
 
@@ -427,7 +428,7 @@ def tokenize(s, stop_token_pattern=None):
 
 
 def parse_twine_html(s):
-    passages = dict()
+    passages = OrderedDict()  # So that we keep the original room order in source code
 
     # The story uses HTML5 custom elements, and so requires an HTML5-aware parser
     full_doc = html5lib.parseFragment(s, namespaceHTMLElements=False)
