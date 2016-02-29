@@ -114,6 +114,50 @@ class TwineRoom:
         return ''.join(str_list)
 
 
+class TwineVariable:
+    def __init__(self, name):
+        self.name = name
+
+    def __str__(self):
+        return '$'+self.name
+
+    def code_str(self):
+        return '$<'+self.name+'>'
+
+
+hook_count = 0  # TODO DEBUG
+class TwineHook:
+    def __init__(self, hook, nametag=None, nametag_on_right=False):
+        self.hook = hook
+        self.nametag = nametag
+        self.nametag_on_right = nametag_on_right
+
+    def __str__(self):
+        str_list = ['[']
+        str_list.extend(escape_list(self.hook))
+        str_list.append(']')
+        if self.nametag:
+            if self.nametag_on_right:
+                str_list.append('&lt;'+escape(self.nametag)+'|')
+            else:
+                str_list = ['|', escape(self.nametag), '&gt;'] + str_list
+        return ''.join(str_list)
+
+    # TODO DEBUG
+    def code_str(self):
+        global hook_count
+        str_list = ['H', str(hook_count)]
+        hook_count += 1
+        if self.nametag:
+            str_list.append('|!'+self.nametag+'!>')
+        str_list.append('[')
+        for item in self.hook:
+            str_list.append(code_str(item))
+        hook_count -= 1
+        str_list.append(']H'+str(hook_count))
+        return ''.join(str_list)
+
+
 class TwineLink:
     def __init__(self, link_text, passage_name=None, passage_on_right=True):
         self.link_text = link_text
@@ -175,50 +219,6 @@ class TwineMacro:
             str_list.append('<'+code_str(item)+'>')
         str_list.append(')')
         return ''.join(str_list)
-
-
-hook_count = 0  # TODO DEBUG
-class TwineHook:
-    def __init__(self, hook, nametag=None, nametag_on_right=False):
-        self.hook = hook
-        self.nametag = nametag
-        self.nametag_on_right = nametag_on_right
-
-    def __str__(self):
-        str_list = ['[']
-        str_list.extend(escape_list(self.hook))
-        str_list.append(']')
-        if self.nametag:
-            if self.nametag_on_right:
-                str_list.append('&lt;'+escape(self.nametag)+'|')
-            else:
-                str_list = ['|', escape(self.nametag), '&gt;'] + str_list
-        return ''.join(str_list)
-
-    # TODO DEBUG
-    def code_str(self):
-        global hook_count
-        str_list = ['H', str(hook_count)]
-        hook_count += 1
-        if self.nametag:
-            str_list.append('|!'+self.nametag+'!>')
-        str_list.append('[')
-        for item in self.hook:
-            str_list.append(code_str(item))
-        hook_count -= 1
-        str_list.append(']H'+str(hook_count))
-        return ''.join(str_list)
-
-
-class TwineVariable:
-    def __init__(self, name):
-        self.name = name
-
-    def __str__(self):
-        return '$'+self.name
-
-    def code_str(self):
-        return '$<'+self.name+'>'
 
 
 def parse_variable(match, s):
