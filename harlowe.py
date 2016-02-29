@@ -154,19 +154,23 @@ class TwineLink:
 
 class TwineMacro:
     def __init__(self, name, code):
-        self.name = name
+        self.name_in_source = name
+        if isinstance(name, text_type):
+            strip_symbols_re = compile_re('-|_')
+            self.canonical_name = strip_symbols_re.sub('', name.lower())
+        else:
+            self.canonical_name = name
         self.code = code
 
     def __str__(self):
-        str_list = ['(', str(self.name), ':']
-        for item in self.code:
-            str_list.append(str(item))
+        str_list = ['(', escape(self.name_in_source), ':']
+        str_list.extend(escape_list(self.code))
         str_list.append(')')
         return ''.join(str_list)
 
     # TODO DEBUG
     def code_str(self):
-        str_list = ['M(<', code_str(self.name), '>: ']
+        str_list = ['M(<', code_str(self.canonical_name), '>: ']
         for item in self.code:
             str_list.append('<'+code_str(item)+'>')
         str_list.append(')')
@@ -306,10 +310,7 @@ def parse_macro(match, s):
         return [match], s
 
     name = name_match.group('name')
-    if name:
-        strip_symbols_re = compile_re('-|_')
-        name = strip_symbols_re.sub('', name.lower())
-    else:
+    if not name:
         # We got a variable
         variable = name_match.group('variable')
         name, s1 = parse_variable(variable[0], variable[1:])
@@ -356,7 +357,7 @@ start_tokens = {'[[': [parse_link, r'\[\[(?!\[)'],
                 '|': [parse_hook, r'\|'],
                 '(': [parse_macro, r'\('],
                 '$': [parse_variable, r'\$'],
-    }
+                }
 
 
 # Verbatim token starts are any number of consecutive ` marks and so are handled separately
