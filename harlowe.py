@@ -63,6 +63,11 @@ def escape(s):
     return s
 
 
+def escape_list(l):
+    """Replace special HTML characters for each item in the list that's a string, and convert non-string objects to strings"""
+    return [escape(item) if isinstance(item, text_type) else str(item) for item in l]
+
+
 # todo debug
 def code_str(item):
     if isinstance(item, text_type):
