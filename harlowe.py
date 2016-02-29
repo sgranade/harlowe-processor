@@ -23,7 +23,7 @@ property_name_pattern = r'[\w{0}]*[a-zA-Z{0}][\w{0}]*'.format(unicode_letters_pa
 # Passage links start with '\[\[(?!\[)'
 # Passage link contents are '[^]]*', and are separated by -> or <-
 variable_name_pattern = property_name_pattern
-variable_pattern = '$'+variable_name_pattern
+variable_pattern = r'\$'+variable_name_pattern
 macro_name_pattern = r'((?P<name>[\w\-{0}\\/][\w\-{0}]*)|(?P<variable>{1})):'.format(unicode_letters_pattern,
                                                                                      variable_pattern)
 hook_tag_name_pattern = r'[\w\-{0}]*'.format(unicode_letters_pattern)
