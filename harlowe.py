@@ -7,8 +7,7 @@ import html5lib
 import xml.etree.ElementTree as etree
 
 
-
-passage_tag = 'tw-passagedata'
+PASSAGE_TAG = 'tw-passagedata'
 
 # These patterns are taken from the Harlowe source (js/markup/Patterns.js)
 # The letters and whitespace patterns include unicode characters. Since they're spelled out
@@ -75,26 +74,77 @@ def code_str(item):
     return item.code_str()
 
 
-class TwineLink:
-    def __init__(self, link_text, destination):
-        self.link_text = link_text
-        self.destination = destination
+class TwineRoom:
+    parsed_contents = None
+    destinations = set()
+    parents = set()
+
+    def __init__(self, pid, name, contents, tags, position):
+        self.pid = pid
+        self.name = name
+        self.contents = contents
+        self.tags = tags
+        self.position = position
+
+    @classmethod
+    def from_string(cls, s):
+        elem = etree.fromstring(s)
+        return cls.from_element(elem)
+
+    @classmethod
+    def from_element(cls, elem):
+        return cls(elem.attrib['pid'], elem.attrib['name'], elem.text, elem.attrib['tags'], elem.attrib['position'])
+
+    def parse_contents(self):
+        self.parsed_contents = tokenize(self.contents)[0]
 
     def __str__(self):
-        str_list = ['[[', self.link_text]
-        if len(self.destination) != 1 or self.link_text != self.destination[0]:
-            str_list.append('->')
-            for item in self.destination:
-                str_list.append(str(item))
+        str_list = ['<{} pid="{}" name="{}" tags="{}" position="{}">'.format(PASSAGE_TAG, self.pid,
+                                                                             escape(self.name), escape(self.tags),
+                                                                             self.position)]
+
+        # Prefer the parsed contents to the raw contents string
+        if self.parsed_contents:
+            str_list.extend(escape_list(self.parsed_contents))
+        elif self.contents:
+            str_list.append(escape(self.contents))
+
+        str_list.append('</{}>'.format(PASSAGE_TAG))
+
+        return ''.join(str_list)
+
+
+class TwineLink:
+    def __init__(self, link_text, passage_name=None, passage_on_right=True):
+        self.link_text = link_text
+        self.passage_name = passage_name
+        self.passage_on_right = passage_on_right
+
+    def __str__(self):
+        str_list = ['[[']
+        escaped_link_text = escape_list(self.link_text)
+        if self.passage_name:
+            escaped_passage_name = escape_list(self.passage_name)
+            if self.passage_on_right:
+                str_list.extend(escaped_link_text)
+                str_list.append('-&gt;')
+                str_list.extend(escaped_passage_name)
+            else:
+                str_list.extend(escaped_passage_name)
+                str_list.append('&lt;-')
+                str_list.extend(escaped_link_text)
+        else:
+            str_list.extend(escaped_link_text)
         str_list.append(']]')
+
         return ''.join(str_list)
 
     # TODO DEBUG
     def code_str(self):
         str_list = ['{{', self.link_text]
-        if len(self.destination) != 1 or self.link_text != self.destination[0]:
+        if len(self.passage_name) != 1 or self.link_text != self.passage_name[0]:
             str_list.append('}->{')
-            for item in self.destination:
+            for item in self.passage_name:
                 str_list.append(code_str(item))
         else:
             str_list = ['S']+str_list
@@ -373,20 +423,6 @@ def tokenize(s, stop_token_pattern=None):
     return to_return
 
 
-class TwineRoom:
-    parsed_contents = []
-    destinations = set()
-    parents = set()
-
-    def __init__(self, pid, name, contents):
-        self.pid = pid
-        self.name = name
-        self.contents = contents
-
-    def parse_contents(self):
-        self.parsed_contents = tokenize(self.contents)[0]
-
-
 def parse_twine_html(s):
     passages = dict()
 
@@ -398,8 +434,8 @@ def parse_twine_html(s):
     title = story_elem.attrib['name']
     startpid = story_elem.attrib['startnode']
 
-        passage = TwineRoom(passage_elem.attrib['pid'], passage_elem.attrib['name'], passage_elem.text)
     for passage_elem in story_elem.iter(PASSAGE_TAG):
+        passage = TwineRoom.from_element(passage_elem)
         passages[passage.name] = passage
 
     return title, startpid, passages
