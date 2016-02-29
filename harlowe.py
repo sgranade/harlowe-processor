@@ -273,13 +273,14 @@ def parse_link(match, s):
         return parse_hook(match[0], match[1:]+s)
 
     contents = link_match.group('contents')
+    dest_on_right = True
     if contents:
         # A link of the form [[contents]]
         tokenized_contents, _, s1 = tokenize(contents)
         if s1:
             # We had text left after parsing, which shouldn't happen
             raise RuntimeError('Parsing a link failed with "{}" text left over (link: "{}")'.format(s1, contents))
-        link = TwineLink(tokenized_contents, tokenized_contents)
+        link = TwineLink(tokenized_contents)
     else:
         description = link_match.group('desc1')
         if description:
@@ -287,6 +288,7 @@ def parse_link(match, s):
         else:
             description = link_match.group('desc2')
             destination = link_match.group('dest2')
+            dest_on_right = False
         tokenized_desc, _, s1 = tokenize(description)
         if s1:
             raise RuntimeError('Parsing a link\'s description failed with "{}" text left over (full description: "{}")'.
@@ -295,12 +297,8 @@ def parse_link(match, s):
         if s1:
             raise RuntimeError('Parsing a link\'s destination failed with "{}" text left over (full destination: "{}")'.
                                format(s1, destination))
-        link = TwineLink(tokenized_desc, tokenized_dest)
+        link = TwineLink(tokenized_desc, tokenized_dest, dest_on_right)
 
-    # TODO is there a limitation on what the link's description can be? Check Harlowe source
-    if len(link.link_text) != 1 or not isinstance(link.link_text[0], text_type):
-        raise RuntimeError("Link didn't have a plain text link: [["+link_match.group(0))
-    link.link_text = link.link_text[0]
     return [link], s[link_match.end(0):]
 
 
@@ -482,7 +480,8 @@ def main():
     for name, room in rooms.items():
         #contents = tokenize(room.contents)[0]
         #print('----\n'+name+'\n'+''.join([code_str(s) for s in room.parsed_contents]))
-        print('----\n'+name+'\n'+textify_contents(room.parsed_contents))
+        #print('----\n'+name+'\n'+textify_contents(room.parsed_contents))
+        print(textify_contents(room.parsed_contents))
         #break
 
     return
