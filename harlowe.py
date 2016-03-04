@@ -101,9 +101,6 @@ class TwineRoom:
     def from_element(cls, elem):
         return cls(elem.attrib['pid'], elem.attrib['name'], elem.text, elem.attrib['tags'], elem.attrib['position'])
 
-    def parse_contents(self):
-        self.parsed_contents = tokenize(self.contents)[0]
-
     def __str__(self):
         str_list = ['<{} pid="{}" name="{}" tags="{}" position="{}">'.format(PASSAGE_TAG, self.pid,
                                                                              escape(self.name), escape(self.tags),
@@ -119,6 +116,18 @@ class TwineRoom:
 
         return ''.join(str_list)
 
+    def parse_contents(self):
+        self.parsed_contents = tokenize(self.contents)[0]
+
+    def modify_text(self, mod_fn):
+        if not self.parsed_contents:
+            self.parse_contents()
+
+        self.parsed_contents = [mod_fn(item) if isinstance(item, text_type) else item.modify_text(mod_fn)
+                                for item in self.parsed_contents]
+
+        return self
+
 
 class TwineVariable:
     def __init__(self, name):
@@ -129,6 +138,9 @@ class TwineVariable:
 
     def code_str(self):
         return '$<'+self.name+'>'
+
+    def modify_text(self, mod_fn):
+        return self
 
 
 hook_count = 0  # TODO DEBUG
@@ -162,6 +174,11 @@ class TwineHook:
         hook_count -= 1
         str_list.append(']H'+str(hook_count))
         return ''.join(str_list)
+
+    def modify_text(self, mod_fn):
+        self.hook = [mod_fn(item) if isinstance(item, text_type) else item.modify_text(mod_fn)
+                     for item in self.hook]
+        return self
 
 
 class TwineLink:
@@ -201,6 +218,12 @@ class TwineLink:
         str_list.append('}}')
         return ''.join(str_list)
 
+    def modify_text(self, mod_fn):
+        if self.passage_name:
+            self.link_text = [mod_fn(item) if isinstance(item, text_type) else item.modify_text(mod_fn)
+                              for item in self.link_text]
+        return self
+
 
 class TwineMacro:
     def __init__(self, name, code):
@@ -225,6 +248,11 @@ class TwineMacro:
             str_list.append('<'+code_str(item)+'>')
         str_list.append(')')
         return ''.join(str_list)
+
+    def modify_text(self, mod_fn):
+        self.code = [mod_fn(item) if isinstance(item, text_type) else item.modify_text(mod_fn)
+                     for item in self.code]
+        return self
 
 
 def parse_variable(match, s):
