@@ -1,9 +1,6 @@
 # coding: utf-8
-
 from harlowe import *
 
-
-# TOKENIZING AND PARSING
 
 class TestTokenizingAndParsing:
 
@@ -67,9 +64,9 @@ class TestTokenizingAndParsing:
 
         results, _, _ = tokenize(contents)
 
-        assert(isinstance(results[0], TwineMacro))
-        assert(isinstance(results[1], TwineHook))
-        assert(isinstance(results[1].hook[0], TwineHook))
+        assert(isinstance(results[0], HarloweMacro))
+        assert(isinstance(results[1], HarloweHook))
+        assert(isinstance(results[1].hook[0], HarloweHook))
         assert(['Nested hook'] == results[1].hook[0].hook)
 
     def test_tokenize_can_tell_when_a_link_is_actually_a_nested_hook(self):
@@ -77,8 +74,8 @@ class TestTokenizingAndParsing:
 
         results, _, _ = tokenize(contents)
 
-        assert(isinstance(results[0], TwineHook))
-        assert(isinstance(results[0].hook[0], TwineHook))
+        assert(isinstance(results[0], HarloweHook))
+        assert(isinstance(results[0].hook[0], HarloweHook))
         assert(['Nested hook'] == results[0].hook[0].hook)
 
     def test_macro_names_can_have_hyphens(self):
@@ -86,7 +83,7 @@ class TestTokenizingAndParsing:
 
         results, _, _ = tokenize(contents)
 
-        assert(isinstance(results[0], TwineMacro))
+        assert(isinstance(results[0], HarloweMacro))
         assert('tExt-style' == results[0].name_in_source)
         # Remember that hyphens get stripped out of the canonical macro names, plus they're made lower case
         assert('textstyle' == results[0].canonical_name)
@@ -98,15 +95,15 @@ class TestTokenizingAndParsing:
         results, _, _ = tokenize(contents)
         macro_obj = results[0]
 
-        assert(isinstance(macro_obj.name_in_source, TwineVariable))
-        assert(isinstance(macro_obj.canonical_name, TwineVariable))
+        assert(isinstance(macro_obj.name_in_source, HarloweVariable))
+        assert(isinstance(macro_obj.canonical_name, HarloweVariable))
 
     def test_hook_can_have_left_tag(self):
         contents = '|tag>[hook]'
 
         results, _, _ = tokenize(contents)
 
-        assert(isinstance(results[0], TwineHook))
+        assert(isinstance(results[0], HarloweHook))
         assert('tag' == results[0].nametag)
         assert(['hook'] == results[0].hook)
 
@@ -115,7 +112,7 @@ class TestTokenizingAndParsing:
 
         results, _, _ = tokenize(contents)
 
-        assert(isinstance(results[0], TwineHook))
+        assert(isinstance(results[0], HarloweHook))
         assert('tag' == results[0].nametag)
 
     def test_hook_tag_can_have_hyphens(self):
@@ -123,7 +120,7 @@ class TestTokenizingAndParsing:
 
         results, _, _ = tokenize(contents)
 
-        assert(isinstance(results[0], TwineHook))
+        assert(isinstance(results[0], HarloweHook))
         assert('ca-age' == results[0].nametag)
 
     def test_hooks_can_contain_links(self):
@@ -131,7 +128,7 @@ class TestTokenizingAndParsing:
 
         results, _, _ = tokenize(contents)
 
-        assert(isinstance(results[0].hook[1], TwineLink))
+        assert(isinstance(results[0].hook[1], HarloweLink))
         assert(['link text'] == results[0].hook[1].link_text)
         assert(not results[0].hook[1].passage_name)
 
@@ -141,49 +138,49 @@ class TestTokenizingAndParsing:
 class TestStringVersionOfObjects:
 
     def test_string_version_of_a_simple_link(self):
-        link_obj = TwineLink(['passage name'])
+        link_obj = HarloweLink(['passage name'])
         link_str = str(link_obj)
 
         assert('[[passage name]]' == link_str)
 
     def test_string_version_of_a_right_arrow_link(self):
-        link_obj = TwineLink(['link text'], ['this room\'s got "quote marks"'])
+        link_obj = HarloweLink(['link text'], ['this room\'s got "quote marks"'])
         link_str = str(link_obj)
 
         assert('[[link text-&gt;this room&#39;s got &quot;quote marks&quot;]]' == link_str)
 
     def test_string_version_of_a_left_arrow_link(self):
-        link_obj = TwineLink(['link text'], ['this room\'s got "quote marks"'], passage_on_right=False)
+        link_obj = HarloweLink(['link text'], ['this room\'s got "quote marks"'], passage_on_right=False)
         link_str = str(link_obj)
 
         assert('[[this room&#39;s got &quot;quote marks&quot;&lt;-link text]]' == link_str)
 
     def test_string_version_of_a_simple_macro(self):
-        macro_obj = TwineMacro('goto', [' "passage link"'])
+        macro_obj = HarloweMacro('goto', [' "passage link"'])
         macro_str = str(macro_obj)
 
         assert('(goto: &quot;passage link&quot;)' == macro_str)
 
     def test_string_version_of_a_macro_preserves_dashes(self):
-        macro_obj = TwineMacro('go-to', [' "passage link"'])
+        macro_obj = HarloweMacro('go-to', [' "passage link"'])
         macro_str = str(macro_obj)
 
         assert('(go-to: &quot;passage link&quot;)' == macro_str)
 
     def test_string_version_of_a_hook_without_a_tag(self):
-        hook_obj = TwineHook(["simple text 'mkay?"])
+        hook_obj = HarloweHook(["simple text 'mkay?"])
         hook_str = str(hook_obj)
 
         assert('[simple text &#39;mkay?]' == hook_str)
 
     def test_string_version_of_a_hook_with_a_right_tag(self):
-        hook_obj = TwineHook(["simple text 'mkay?"], 'right-tag', nametag_on_right=True)
+        hook_obj = HarloweHook(["simple text 'mkay?"], 'right-tag', nametag_on_right=True)
         hook_str = str(hook_obj)
 
         assert('[simple text &#39;mkay?]&lt;right-tag|' == hook_str)
 
     def test_string_version_of_a_hook_with_a_left_tag(self):
-        hook_obj = TwineHook(["simple text 'mkay?"], 'left-tag', nametag_on_right=False)
+        hook_obj = HarloweHook(["simple text 'mkay?"], 'left-tag', nametag_on_right=False)
         hook_str = str(hook_obj)
 
         assert('|left-tag&gt;[simple text &#39;mkay?]' == hook_str)
@@ -192,29 +189,29 @@ class TestStringVersionOfObjects:
 class TestTextModifications:
 
     def test_variable_names_arent_modified(self):
-        variable_obj = TwineVariable('name')
+        variable_obj = HarloweVariable('name')
 
         variable_obj.modify_text(lambda s: s.upper())
 
         assert('name' == variable_obj.name)
 
     def test_modifying_hook_changes_hook_contents(self):
-        hook_obj = TwineHook(['text'], nametag='tag')
+        hook_obj = HarloweHook(['text'], nametag='tag')
 
         hook_obj.modify_text(lambda s: s.upper())
 
         assert(['TEXT'] == hook_obj.hook)
 
     def test_modifying_hook_leaves_nametags_alone(self):
-        hook_obj = TwineHook(['text'], nametag='tag')
+        hook_obj = HarloweHook(['text'], nametag='tag')
 
         hook_obj.modify_text(lambda s: s.upper())
 
         assert('tag' == hook_obj.nametag)
 
     def test_hook_contents_are_modified_recursively(self):
-        inner_hook_obj = TwineHook(['inner'], nametag='tag')
-        hook_obj = TwineHook(['outer', inner_hook_obj])
+        inner_hook_obj = HarloweHook(['inner'], nametag='tag')
+        hook_obj = HarloweHook(['outer', inner_hook_obj])
 
         hook_obj.modify_text(lambda s: s.upper())
 
@@ -222,22 +219,22 @@ class TestTextModifications:
         assert(['INNER'] == hook_obj.hook[1].hook)
 
     def test_links_with_no_separate_passage_arent_modified(self):
-        link_obj = TwineLink(['text'])
+        link_obj = HarloweLink(['text'])
 
         link_obj.modify_text(lambda s: s.upper())
 
         assert(['text'] == link_obj.link_text)
 
     def test_links_with_a_passage_are_modified(self):
-        link_obj = TwineLink(['text'], 'passage_name')
+        link_obj = HarloweLink(['text'], 'passage_name')
 
         link_obj.modify_text(lambda s: s.upper())
 
         assert(['TEXT'] == link_obj.link_text)
 
     def test_link_contents_are_modified_recursively(self):
-        inner_link_obj = TwineLink(['inner'], 'passage_name')
-        link_obj = TwineLink(['outer', inner_link_obj], 'passage_name')
+        inner_link_obj = HarloweLink(['inner'], 'passage_name')
+        link_obj = HarloweLink(['outer', inner_link_obj], 'passage_name')
 
         link_obj.modify_text(lambda s: s.upper())
 
@@ -245,7 +242,7 @@ class TestTextModifications:
         assert(['INNER'] == link_obj.link_text[1].link_text)
 
     def test_macro_names_arent_modified(self):
-        macro_obj = TwineMacro('macro name', ['code'])
+        macro_obj = HarloweMacro('macro name', ['code'])
 
         macro_obj.modify_text(lambda s: s.upper())
 
@@ -253,15 +250,15 @@ class TestTextModifications:
         assert('macro name' == macro_obj.canonical_name)
 
     def test_macro_contents_are_modified(self):
-        macro_obj = TwineMacro('macro name', ['code'])
+        macro_obj = HarloweMacro('macro name', ['code'])
 
         macro_obj.modify_text(lambda s: s.upper())
 
         assert(['CODE'] == macro_obj.code)
 
     def test_macro_contents_are_modified_recursively(self):
-        inner_macro_obj = TwineMacro('inner macro name', ['inner macro code'])
-        macro_obj = TwineMacro('outer macro name', ['outer macro code', inner_macro_obj])
+        inner_macro_obj = HarloweMacro('inner macro name', ['inner macro code'])
+        macro_obj = HarloweMacro('outer macro name', ['outer macro code', inner_macro_obj])
 
         macro_obj.modify_text(lambda s: s.upper())
 
@@ -272,7 +269,7 @@ class TestTextModifications:
         passage_str = '<tw-passagedata pid="1" name="Opening Scene" tags="40% fadein nosave" position="388,116">' \
               + '|tag&gt;[hook text plus (macro: "code")] $variable [[link text-&gt;passage]]' \
               + '</tw-passagedata>'
-        passage_obj = TwineRoom.from_string(passage_str)
+        passage_obj = HarlowePassage.from_string(passage_str)
 
         passage_obj.modify_text(lambda s: s.upper())
 
@@ -288,7 +285,7 @@ class TestRoundTripping:
         passage_str = '<tw-passagedata pid="1" name="Opening Scene" tags="40% fadein nosave" position="388,116">' \
                       + '</tw-passagedata>'
 
-        passage_obj = TwineRoom.from_string(passage_str)
+        passage_obj = HarlowePassage.from_string(passage_str)
         new_passage_str = str(passage_obj)
 
         assert(passage_str == new_passage_str)
@@ -298,7 +295,7 @@ class TestRoundTripping:
                       + '&quot;I&#39;ve got both single and double quotes.&quot;' \
                       + '</tw-passagedata>'
 
-        passage_obj = TwineRoom.from_string(passage_str)
+        passage_obj = HarlowePassage.from_string(passage_str)
         new_passage_str = str(passage_obj)
 
         assert(passage_str == new_passage_str)
@@ -308,7 +305,7 @@ class TestRoundTripping:
                       + '&quot;I&#39;ve got both single and double quotes.&quot;' \
                       + '</tw-passagedata>'
 
-        passage_obj = TwineRoom.from_string(passage_str)
+        passage_obj = HarlowePassage.from_string(passage_str)
         passage_obj.parse_contents()
         passage_obj.contents += 'extra text'
         new_passage_str = str(passage_obj)
@@ -320,7 +317,7 @@ class TestRoundTripping:
                       + 'This has a link: [[link text-&gt;this&#39;s the passage name]]' \
                       + '</tw-passagedata>'
 
-        passage_obj = TwineRoom.from_string(passage_str)
+        passage_obj = HarlowePassage.from_string(passage_str)
         passage_obj.parse_contents()
         new_passage_str = str(passage_obj)
 
@@ -331,7 +328,7 @@ class TestRoundTripping:
                       + 'This has a link: [[passage name&lt;-link text]]' \
                       + '</tw-passagedata>'
 
-        passage_obj = TwineRoom.from_string(passage_str)
+        passage_obj = HarlowePassage.from_string(passage_str)
         passage_obj.parse_contents()
         new_passage_str = str(passage_obj)
 
@@ -342,7 +339,7 @@ class TestRoundTripping:
                       + 'This has a macro with a dash: (go-to: &quot;new passage&quot;)' \
                       + '</tw-passagedata>'
 
-        passage_obj = TwineRoom.from_string(passage_str)
+        passage_obj = HarlowePassage.from_string(passage_str)
         passage_obj.parse_contents()
         new_passage_str = str(passage_obj)
 
@@ -353,7 +350,7 @@ class TestRoundTripping:
                       + 'Anonymous hook [ that only contains text ]' \
                       + '</tw-passagedata>'
 
-        passage_obj = TwineRoom.from_string(passage_str)
+        passage_obj = HarlowePassage.from_string(passage_str)
         passage_obj.parse_contents()
         new_passage_str = str(passage_obj)
 
@@ -364,7 +361,7 @@ class TestRoundTripping:
                       + 'Named hook [ that only contains text ]&lt;right tag|' \
                       + '</tw-passagedata>'
 
-        passage_obj = TwineRoom.from_string(passage_str)
+        passage_obj = HarlowePassage.from_string(passage_str)
         passage_obj.parse_contents()
         new_passage_str = str(passage_obj)
 
@@ -375,7 +372,7 @@ class TestRoundTripping:
                       + 'Named hook |left tag&gt;[ that only contains text ]' \
                       + '</tw-passagedata>'
 
-        passage_obj = TwineRoom.from_string(passage_str)
+        passage_obj = HarlowePassage.from_string(passage_str)
         passage_obj.parse_contents()
         new_passage_str = str(passage_obj)
 
