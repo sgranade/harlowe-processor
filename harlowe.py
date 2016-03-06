@@ -7,6 +7,8 @@ from collections import OrderedDict
 import html5lib
 import xml.etree.ElementTree as etree
 
+from helper_functions import compile_re
+
 
 _PASSAGE_TAG = 'tw-passagedata'
 
@@ -28,26 +30,6 @@ _MACRO_NAME_PATTERN = r'((?P<name>[\w\-{0}\\/][\w\-{0}]*)|(?P<variable>{1})):'.f
                                                                                       _VARIABLE_PATTERN)
 _HOOK_NAME_PATTERN = r'[\w\-{0}]*'.format(_UNICODE_LETTERS_PATTERN)
 _LINK_CONTENTS_PATTERN = r'((?P<desc1>[^]]+)\->(?P<dest1>[^]]+)|(?P<dest2>[^]]+?)<\-(?P<desc2>[^]]+)|(?P<contents>[^]]*))'
-
-
-# Memoize computed regexes. Sadly Python 2 doesn't have functools.lru_cache()
-_regex_cache = dict()
-def _compile_re(pattern):
-    """
-    Compile a regular expression (with memoization).
-
-    Args:
-        pattern (str): The regex to be compiled.
-
-    Returns:
-        The compiled regular expression object.
-    """
-    try:
-        regex = _regex_cache[pattern]
-    except KeyError:
-        regex = re.compile(pattern)
-        _regex_cache[pattern] = regex
-    return regex
 
 
 # Append an item to an array either by a regular append or, if both the new
@@ -358,7 +340,7 @@ class HarloweMacro:
         """
         self.name_in_source = name
         if isinstance(name, text_type):
-            strip_symbols_re = _compile_re('-|_')
+            strip_symbols_re = compile_re('-|_')
             self.canonical_name = strip_symbols_re.sub('', name.lower())
         else:
             self.canonical_name = name
@@ -386,7 +368,7 @@ class HarloweMacro:
 
 
 def _parse_variable(match, s):
-    variable_re = _compile_re(_VARIABLE_NAME_PATTERN)
+    variable_re = compile_re(_VARIABLE_NAME_PATTERN)
     variable_match = variable_re.match(s)
     if variable_match:
         return [HarloweVariable(variable_match.group(0))], s[variable_match.end(0):]
@@ -402,7 +384,7 @@ def _parse_hook(match, s):
     nametag_on_right = False
     if match == '|':
         # Make sure this is an actual name tag
-        left_tag_re = _compile_re(r'(?P<nametag>' + _HOOK_NAME_PATTERN + ')>\[')
+        left_tag_re = compile_re(r'(?P<nametag>' + _HOOK_NAME_PATTERN + ')>\[')
         tag_match = left_tag_re.match(s)
         if not tag_match:
             return [match], original_text
@@ -416,7 +398,7 @@ def _parse_hook(match, s):
 
     if stop_token == ']<':
         # We may have a name tag
-        right_tag_re = _compile_re(r'(?P<nametag>' + _HOOK_NAME_PATTERN + ')\|')
+        right_tag_re = compile_re(r'(?P<nametag>' + _HOOK_NAME_PATTERN + ')\|')
         tag_match = right_tag_re.match(s1)
         if tag_match:
             nametag = tag_match.group('nametag')
@@ -431,7 +413,7 @@ def _parse_hook(match, s):
 
 def _parse_link(match, s):
     # Links are in the form [[str->destination]] or [[destination<-str]] or [[destination]]
-    link_re = _compile_re(_LINK_CONTENTS_PATTERN + r'\]\]')
+    link_re = compile_re(_LINK_CONTENTS_PATTERN + r'\]\]')
     link_match = link_re.match(s)
     if not link_match:
         # Whoops, not a link, so see if we're two nested macros
@@ -469,7 +451,7 @@ def _parse_link(match, s):
 
 def _parse_macro(match, s):
     # Macros are in the form "(name: content)"
-    name_re = _compile_re(_MACRO_NAME_PATTERN)
+    name_re = compile_re(_MACRO_NAME_PATTERN)
     name_match = name_re.match(s)
     if not name_match:
         # Not a macro
@@ -545,9 +527,9 @@ def tokenize(s, stop_token_pattern=None):
     """
     token_list = []
     if not stop_token_pattern:
-        token_re = _compile_re(_START_TOKEN_PATTERNS)
+        token_re = compile_re(_START_TOKEN_PATTERNS)
     else:
-        token_re = _compile_re(_START_TOKEN_PATTERNS + '|(?P<stop>' + stop_token_pattern + ')')
+        token_re = compile_re(_START_TOKEN_PATTERNS + '|(?P<stop>' + stop_token_pattern + ')')
     to_return = None, None, None
 
     while True:
@@ -578,7 +560,7 @@ def tokenize(s, stop_token_pattern=None):
                 # See if we have verbatim text, which is marked by 1+ ` marks
                 if token[0] == "`":
                     s = s[token_match.end('start'):]
-                    verbatim_re = _compile_re(r'(?P<text>.+?)`{' + str(len(token)) + '}')
+                    verbatim_re = compile_re(r'(?P<text>.+?)`{' + str(len(token)) + '}')
                     verbatim_match = verbatim_re.match(s)
                     if verbatim_match:
                         _append_with_string_merge(token_list, verbatim_match.group('text'))
