@@ -1,5 +1,5 @@
 # coding: utf-8
-from harlowe import *
+from harlowe import HarloweHook, HarloweLink, HarloweMacro, HarlowePassage, HarloweVariable, tokenize
 
 
 class TestTokenizingAndParsing:
