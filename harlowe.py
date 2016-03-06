@@ -73,12 +73,6 @@ def escape_list(l):
     return [escape(item) if isinstance(item, text_type) else str(item) for item in l]
 
 
-# todo debug
-def code_str(item):
-    if isinstance(item, text_type):
-        return item
-    return item.code_str()
-
 
 class TwineRoom:
     parsed_contents = None
@@ -136,9 +130,6 @@ class TwineVariable:
     def __str__(self):
         return '$'+self.name
 
-    def code_str(self):
-        return '$<'+self.name+'>'
-
     def modify_text(self, mod_fn):
         return self
 
@@ -161,18 +152,6 @@ class TwineHook:
                 str_list = ['|', escape(self.nametag), '&gt;'] + str_list
         return ''.join(str_list)
 
-    # TODO DEBUG
-    def code_str(self):
-        global hook_count
-        str_list = ['H', str(hook_count)]
-        hook_count += 1
-        if self.nametag:
-            str_list.append('|!'+self.nametag+'!>')
-        str_list.append('[')
-        for item in self.hook:
-            str_list.append(code_str(item))
-        hook_count -= 1
-        str_list.append(']H'+str(hook_count))
         return ''.join(str_list)
 
     def modify_text(self, mod_fn):
@@ -206,18 +185,6 @@ class TwineLink:
 
         return ''.join(str_list)
 
-    # TODO DEBUG
-    def code_str(self):
-        str_list = ['{{', self.link_text]
-        if len(self.passage_name) != 1 or self.link_text != self.passage_name[0]:
-            str_list.append('}->{')
-            for item in self.passage_name:
-                str_list.append(code_str(item))
-        else:
-            str_list = ['S']+str_list
-        str_list.append('}}')
-        return ''.join(str_list)
-
     def modify_text(self, mod_fn):
         if self.passage_name:
             self.link_text = [mod_fn(item) if isinstance(item, text_type) else item.modify_text(mod_fn)
@@ -238,14 +205,6 @@ class TwineMacro:
     def __str__(self):
         str_list = ['(', escape(self.name_in_source), ':']
         str_list.extend(escape_list(self.code))
-        str_list.append(')')
-        return ''.join(str_list)
-
-    # TODO DEBUG
-    def code_str(self):
-        str_list = ['M(<', code_str(self.canonical_name), '>: ']
-        for item in self.code:
-            str_list.append('<'+code_str(item)+'>')
         str_list.append(')')
         return ''.join(str_list)
 
