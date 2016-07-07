@@ -2,14 +2,14 @@
 from __future__ import division, unicode_literals, print_function
 from six import text_type
 
-import re
 from collections import OrderedDict
 import html5lib
-import xml.etree.ElementTree as etree
+from lxml import etree
 
 from helper_functions import compile_re
 
 
+_STORY_TAG = 'tw-storydata'
 _PASSAGE_TAG = 'tw-passagedata'
 
 # These patterns are taken from the Harlowe source (js/markup/Patterns.js)
@@ -591,21 +591,54 @@ def parse_harlowe_html(s):
         s (str): The Harlowe source.
 
     Returns:
-        (str, str, OrderedDict): The game's name, the passage ID where the game starts, and a dict whose keys are the
-         passage's names and values are the corresponding HarlowePassage objects.
+        (dict, list, OrderedDict): A dictionary of the attributes on the top-level tw-storydata
+         element, a list of non-passage elements in the game (as etree.ElementTree.Element),
+         and a dict whose keys are the passage's names and whose values are the
+         corresponding HarlowePassage objects.
     """
     passages = OrderedDict()  # So that we keep the original room order in source code
+    other_elems = list()
 
     # The story uses HTML5 custom elements, and so requires an HTML5-aware parser
-    full_doc = html5lib.parseFragment(s, namespaceHTMLElements=False)
-    story_elem = full_doc.find('tw-storydata')
-    if not story_elem:
-        raise RuntimeError('No properly-formatted story tag (tw-storydata) found')
-    title = story_elem.attrib['name']
-    startpid = story_elem.attrib['startnode']
+    story_elem = html5lib.parseFragment(s, treebuilder='lxml', namespaceHTMLElements=False)[0]
+    if not story_elem or story_elem.tag != _STORY_TAG:
+        raise RuntimeError('No properly-formatted story tag ('+_STORY_TAG+') found')
 
-    for passage_elem in story_elem.iter(_PASSAGE_TAG):
-        passage = HarlowePassage.from_element(passage_elem)
-        passages[passage.name] = passage
+    for elem in story_elem:
+        if elem.tag == _PASSAGE_TAG:
+            passage = HarlowePassage.from_element(elem)
+            passages[passage.name] = passage
+        else:
+            other_elems.append(elem)
 
-    return title, startpid, passages
+    return story_elem.attrib, other_elems, passages
+
+
+def reconstruct_harlowe_html(story_attribs, other_elems, passages):
+    """
+    Turn parsed Harlowe passage objects back into HTML.
+
+    Args:
+        story_attribs (dict): Attributes to be attached to the top-level tw-storydata
+        other_elems (list): Non-passage elements in the game (as etree.ElementTree.Element)
+        passages (dict): Passages, where the keys are the passage's names and the
+        values are the corresponding HarlowePassage objects.
+
+    Returns:
+        str: The Twine game in its HTML form.
+    """
+
+    passages_html = '\n'.join([str(passage_obj) for _, passage_obj in passages.items()])+'\n'
+
+    story_elem = etree.Element(_STORY_TAG, story_attribs)
+    if other_elems:
+        story_elem.extend(other_elems)
+
+    story_html = etree.tostring(story_elem, encoding='unicode')
+
+    # Add the passages_html in by hand, since adding it to an xml element would escape
+    # all of the angle brackets, turning them into &lt; and &gt;
+    before, sep, after = story_html.partition('</'+_STORY_TAG+'>')
+    story_html = before+passages_html+sep+after
+
+    return story_html

@@ -56,7 +56,7 @@ class TestTokenizingAndParsing:
 
         results, _, _ = tokenize(contents)
 
-        assert(None == results[0].nametag)
+        assert(results[0].nametag is None)
         assert(['this is a simple anonymous hook'] == results[0].hook)
 
     def test_tokenize_binds_hooks_tightly_to_macros(self):
@@ -279,7 +279,7 @@ class TestTextModifications:
         assert(['LINK TEXT'] == passage_obj.parsed_contents[4].link_text)
 
 
-class TestRoundTripping:
+class TestRoundTrippingPassages:
 
     def test_round_tripping_an_empty_passage(self):
         passage_str = '<tw-passagedata pid="1" name="Opening Scene" tags="40% fadein nosave" position="388,116">' \
@@ -377,4 +377,3 @@ class TestRoundTripping:
         new_passage_str = str(passage_obj)
 
         assert(passage_str == new_passage_str)
-
