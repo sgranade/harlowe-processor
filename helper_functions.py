@@ -42,7 +42,7 @@ def sub_re(pattern, replacement, s, count=0, flags=0):
 def smartify_entities(s):
     """
     Given a string, turn its slab quotes into HTML curly quote entities, dashes in to em-dash entitites, and
-    ellipses into the ellipsis entity.
+    ellipses into the ellipsis entity. HTML comments (<!-- comment -->) are left alone.
 
     This is a modified version of the [smartypants module](https://bitbucket.org/livibetter/smartypants.py).
 
@@ -144,7 +144,7 @@ def _smartify_quotes(s):
 
 
 def _smartify_dashes(s):
-    return sub_re('--', '&mdash;', s)
+    return sub_re('(?<!\<\!)--(?!\>)', '&mdash;', s)
 
 
 def _smartify_ellipses(s):

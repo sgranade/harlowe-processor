@@ -72,3 +72,21 @@ def test_smartified_ellipses_with_spaces():
     result = smartify_entities(s)
 
     assert(s_smart == result)
+
+
+def test_smartified_dashes():
+    s = 'Wait--let me make sure this works'
+    s_smart = 'Wait&mdash;let me make sure this works'
+
+    result = smartify_entities(s)
+
+    assert(s_smart == result)
+
+
+def test_smartified_dashes_leaves_html_comments_alone():
+    s = '<!-- html comment --> This--this is a dash'
+    s_smart = '<!-- html comment --> This&mdash;this is a dash'
+
+    result = smartify_entities(s)
+
+    assert(s_smart == result)
