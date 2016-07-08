@@ -81,7 +81,7 @@ def _escape_string(s, surrounding_quote='"'):
 
     Args:
         s: The string to escape.
-        surrounding_quote: The quote mark surrounding the string
+        surrounding_quote: The quote mark surrounding the string.
 
     Returns:
         The escaped string.
@@ -103,6 +103,19 @@ def _escape_harlowe_html(s):
     Returns:
         The escaped string.
     """
+    # We can't just replace ampersands willy-nilly because that will stomp on
+    # pre-existing character references. So don't match things like &quot; or &#17;.
+    ampersand_re = compile_re('''
+        &                       # Match an ampersand
+        (?!                     # that isn't followed by:
+            (\#\d+ |            #   a hash plus digits (#nnnn) or...
+            \#x[0-9a-fA-F]+ |   #   a hash and "x" plus hex digits (#xffff) or...
+            \w+                 #   word characters
+            )
+        );                      # and then a semicolon
+    ''', re.VERBOSE)
+
+    #s = ampersand_re.sub("&amp;", s)
     s = s.replace("&", "&amp;")
     s = s.replace("<", "&lt;")
     s = s.replace(">", "&gt;")
@@ -168,6 +181,7 @@ class HarlowePassage:
         Returns:
             The new Harlowe passage object.
         """
+        # TODO this doesn't work if you have non-defined entities like &lsquo; in your text!
         elem = etree.fromstring(s)
         return cls.from_element(elem)
 
@@ -435,8 +449,6 @@ class HarloweMacro:
 
         self.code = new_code
 
-        #self.code = [mod_fn(item) if isinstance(item, text_type) else item.modify_text(mod_fn)
-         #            for item in self.code]
         return self
 
 

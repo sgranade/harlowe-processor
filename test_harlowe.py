@@ -321,6 +321,16 @@ class TestRoundTrippingPassages:
 
         assert(passage_str == new_passage_str)
 
+    def test_round_tripping_a_passage_with_existing_html_character_entities(self):
+        passage_str = '<tw-passagedata pid="1" name="Opening Scene" tags="40% fadein nosave" position="388,116">' \
+                      + 'Here is an existing entity: &lsquo; What do you think?' \
+                      + '</tw-passagedata>'
+
+        passage_obj = HarlowePassage.from_string(passage_str)
+        new_passage_str = str(passage_obj)
+
+        assert (passage_str == new_passage_str)
+
     def test_passage_obj_to_string_prefers_parsed_contents(self):
         passage_str = '<tw-passagedata pid="1" name="Opening Scene" tags="40% fadein nosave" position="388,116">' \
                       + '&quot;I&#39;ve got both single and double quotes.&quot;' \
