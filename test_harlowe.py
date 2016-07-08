@@ -249,21 +249,42 @@ class TestTextModifications:
         assert('macro name' == macro_obj.name_in_source)
         assert('macro name' == macro_obj.canonical_name)
 
-    def test_macro_contents_are_modified(self):
-        macro_obj = HarloweMacro('macro name', ['code'])
+    def test_macro_contents_that_are_double_quoted_strings_are_modified(self):
+        macro_obj = HarloweMacro('macro name', ['code + "string"'])
 
         macro_obj.modify_text(lambda s: s.upper())
 
-        assert(['CODE'] == macro_obj.code)
+        assert(['code + "STRING"'] == macro_obj.code)
+
+    def test_macro_contents_dont_modify_escaped_strings(self):
+        macro_obj = HarloweMacro('macro name', ['code + "escaped \\"string\\""'])
+
+        macro_obj.modify_text(lambda s: s.replace('"', "'"))
+
+        assert(['code + "escaped \'string\'"'] == macro_obj.code)
+
+    def test_macro_contents_that_are_single_quoted_strings_are_modified(self):
+        macro_obj = HarloweMacro('macro name', ['"\'string\'" + \'"string"\''])
+
+        macro_obj.modify_text(lambda s: s.replace('"', "'"))
+
+        assert(['"\'string\'" + \'\\\'string\\\'\''] == macro_obj.code)
+
+    def test_macro_contents_handle_ending_backslash_okay(self):
+        macro_obj = HarloweMacro('macro name', ['"This \\"ends\\" in a backslash\\\\"'])
+
+        macro_obj.modify_text(lambda s: s.replace('"', "'"))
+
+        assert(['"This \'ends\' in a backslash\\\\"'] == macro_obj.code)
 
     def test_macro_contents_are_modified_recursively(self):
-        inner_macro_obj = HarloweMacro('inner macro name', ['inner macro code'])
-        macro_obj = HarloweMacro('outer macro name', ['outer macro code', inner_macro_obj])
+        inner_macro_obj = HarloweMacro('inner macro name', ['inner "macro" code'])
+        macro_obj = HarloweMacro('outer macro name', ['outer "macro" code', inner_macro_obj])
 
         macro_obj.modify_text(lambda s: s.upper())
 
-        assert('OUTER MACRO CODE' == macro_obj.code[0])
-        assert(['INNER MACRO CODE'] == macro_obj.code[1].code)
+        assert('outer "MACRO" code' == macro_obj.code[0])
+        assert(['inner "MACRO" code'] == macro_obj.code[1].code)
 
     def test_rooms_recursively_modify_everything(self):
         passage_str = '<tw-passagedata pid="1" name="Opening Scene" tags="40% fadein nosave" position="388,116">' \

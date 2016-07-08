@@ -3,6 +3,8 @@ from __future__ import division, unicode_literals, print_function
 from six import text_type
 
 from collections import OrderedDict
+import re
+import codecs
 import html5lib
 from lxml import etree
 
@@ -49,6 +51,47 @@ def _append_with_string_merge(seq, new_item):
         seq.append(s+new_item)
     else:
         seq.append(new_item)
+
+
+def _unescape_string(s):
+    """Decode any backslash-escaped literals in a string.
+
+    Args:
+        s: The string to decode.
+
+    Returns:
+        The decoded string.
+    """
+    # We don't use codecs.decode() straight up for reasons explained in http://stackoverflow.com/a/24519338
+    escape_sequence = compile_re(r'''
+        ( \\U........      # 8-digit hex escapes
+        | \\u....          # 4-digit hex escapes
+        | \\x..            # 2-digit hex escapes
+        | \\[0-7]{1,3}     # Octal escapes
+        | \\N\{[^}]+\}     # Unicode characters by name
+        | \\[\\'"abfnrtv]  # Single-character escapes
+        )''', re.UNICODE | re.VERBOSE)
+
+    return escape_sequence.sub(lambda match: codecs.decode(match.group(0), 'unicode-escape'),
+                               s)
+
+
+def _escape_string(s, surrounding_quote='"'):
+    """Escape special characters in a string by adding backslashes.
+
+    Args:
+        s: The string to escape.
+        surrounding_quote: The quote mark surrounding the string
+
+    Returns:
+        The escaped string.
+    """
+    s = s.replace('\\', '\\\\')
+    if surrounding_quote == '"':
+        s = s.replace('"', r'\"')
+    if surrounding_quote == "'":
+        s = s.replace("'", r"\'")
+    return s
 
 
 def _escape_harlowe_html(s):
@@ -362,8 +405,38 @@ class HarloweMacro:
         Returns:
             The Harlowe macro object.
         """
-        self.code = [mod_fn(item) if isinstance(item, text_type) else item.modify_text(mod_fn)
-                     for item in self.code]
+        # This off-the-wall regex is adapted from http://stackoverflow.com/a/171499
+        # because it handles backslashes inside of strings properly.
+        # The more compact, completely unreadable version is: ((["'])((?:(?=(\\?))\4.)*?)\2)
+        string_re = compile_re(r'''
+        (?P<string>               # The full string
+            (?P<quotemark>["\'])  # The opening quote mark
+            (?P<contents>         # The actual string contents
+                (?:               # Don't make this next part a group
+                    (?=           # Match any backslash...
+                        (?P<possible_backslash>\\?)
+                    )(?P=possible_backslash) # ...followed by another
+                    .             # And any character
+                )*?               # Match that non-group repeatedly but non-greedily
+            )
+        (?P=quotemark))           # Capture the same quote mark we opened the string with
+        ''', re.VERBOSE)
+
+        new_code = []
+
+        for item in self.code:
+            if isinstance(item, text_type):
+                new_code.append(string_re.sub(lambda match: match.group('quotemark') +
+                                              _escape_string(mod_fn(_unescape_string(match.group('contents'))),
+                                                             match.group('quotemark')) +
+                                              match.group('quotemark'), item))
+            else:
+                new_code.append(item.modify_text(mod_fn))
+
+        self.code = new_code
+
+        #self.code = [mod_fn(item) if isinstance(item, text_type) else item.modify_text(mod_fn)
+         #            for item in self.code]
         return self
 
 
@@ -601,7 +674,7 @@ def parse_harlowe_html(s):
 
     # The story uses HTML5 custom elements, and so requires an HTML5-aware parser
     story_elem = html5lib.parseFragment(s, treebuilder='lxml', namespaceHTMLElements=False)[0]
-    if not story_elem or story_elem.tag != _STORY_TAG:
+    if story_elem is None or story_elem.tag != _STORY_TAG:
         raise RuntimeError('No properly-formatted story tag ('+_STORY_TAG+') found')
 
     for elem in story_elem:
