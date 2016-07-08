@@ -20,5 +20,11 @@ with open(args.input, 'rt') as infile:
 
 story_elems, other_elems, passages = harlowe.parse_harlowe_html(story_str)
 
-for passage in passages:
-    passage.modify_text()
+for _, passage_obj in passages.items():
+    passage_obj.modify_text(smartify_entities)
+
+modified_story_str = harlowe.reconstruct_harlowe_html(story_elems, other_elems, passages)
+
+with open(args.output, 'wt') as outfile:
+    outfile.write(modified_story_str)
+
