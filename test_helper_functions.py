@@ -56,6 +56,15 @@ def test_smartified_quote_before_a_unicode_dash():
     assert(s_smart == result)
 
 
+def test_smartifying_quotes_leaves_harlowe_bold_marks_alone():
+    s = r"""Don't muck about with ''stuff that's in bold!''"""
+    s_smart = r"""Don’t muck about with ''stuff that’s in bold!''"""
+
+    result = smartify_entities(s)
+
+    assert(s_smart == result)
+
+
 def test_smartified_dashes():
     s = 'This--this includes a dash.'
     s_smart = 'This&mdash;this includes a dash.'

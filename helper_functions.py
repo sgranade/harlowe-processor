@@ -61,7 +61,11 @@ def smartify_entities(s):
 def _smartify_quotes(s):
     punct_pattern = r"""[!"#\$\%'()*+,-.\/:;<=>?\@\[\\\]\^_`{|}~]"""
     close_pattern = r"""[^\ \t\r\n\[\{\(\-]"""
+    close_pattern_no_leading_single_quotes = r"""[^\ \t\r\n\[\{\(\-']"""
     dec_dashes_pattern = r"""&#8211;|&#8212;|&ndash;|–|&mdash;|—"""
+
+    # One thing to note: Harlowe uses "''" as a delimiter to indicate bold text.
+    # We'll have to avoid that
 
     # Special case if the very first character is a quote
     # followed by punctuation at a non-word-break. Close the quotes by brute force:
@@ -95,8 +99,8 @@ def _smartify_quotes(s):
     closing_single_quotes_regex = compile_re(r"""
             (%s)
             '
-            (?!\s | s\b | \d)
-            """ % (close_pattern,), re.VERBOSE)
+            (?!\s | s\b | \d | ')
+            """ % (close_pattern_no_leading_single_quotes,), re.VERBOSE)
     s = closing_single_quotes_regex.sub(r"""\1’""", s)
 
     closing_single_quotes_regex = compile_re(r"""
@@ -106,8 +110,9 @@ def _smartify_quotes(s):
             """ % (close_pattern,), re.VERBOSE)
     s = closing_single_quotes_regex.sub(r"""\1’\2""", s)
 
-    # Any remaining single quotes should be opening ones:
-    s = sub_re(r"""'""", r"""‘""", s)
+    # Any remaining single quotes that are by themselves should be opening ones:
+    s = sub_re(r"""(?<!')'(?!')""", r"""‘""", s)
+    # (Note that they need to be by themselves so as not to catch Harlowe '' bold marks)
 
     # Get most opening double quotes:
     opening_double_quotes_regex = compile_re(r"""
