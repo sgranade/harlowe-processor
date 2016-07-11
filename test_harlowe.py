@@ -325,11 +325,14 @@ class TestRoundTrippingPassages:
         passage_str = '<tw-passagedata pid="1" name="Opening Scene" tags="40% fadein nosave" position="388,116">' \
                       + 'Here is an existing entity: &lsquo; What do you think?' \
                       + '</tw-passagedata>'
+        altered_passage_str = '<tw-passagedata pid="1" name="Opening Scene" tags="40% fadein nosave" position="388,116">' \
+                      + 'Here is an existing entity: ‘ What do you think?' \
+                      + '</tw-passagedata>'
 
         passage_obj = HarlowePassage.from_string(passage_str)
         new_passage_str = str(passage_obj)
 
-        assert (passage_str == new_passage_str)
+        assert (altered_passage_str == new_passage_str)
 
     def test_passage_obj_to_string_prefers_parsed_contents(self):
         passage_str = '<tw-passagedata pid="1" name="Opening Scene" tags="40% fadein nosave" position="388,116">' \

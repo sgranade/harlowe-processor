@@ -6,7 +6,7 @@ from collections import OrderedDict
 import re
 import codecs
 import html5lib
-from lxml import etree
+from lxml import etree, html
 
 from helper_functions import compile_re
 
@@ -181,8 +181,7 @@ class HarlowePassage:
         Returns:
             The new Harlowe passage object.
         """
-        # TODO this doesn't work if you have non-defined entities like &lsquo; in your text!
-        elem = etree.fromstring(s)
+        elem = html.fromstring(s)
         return cls.from_element(elem)
 
     @classmethod
