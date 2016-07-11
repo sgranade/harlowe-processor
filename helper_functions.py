@@ -61,20 +61,20 @@ def smartify_entities(s):
 def _smartify_quotes(s):
     punct_pattern = r"""[!"#\$\%'()*+,-.\/:;<=>?\@\[\\\]\^_`{|}~]"""
     close_pattern = r"""[^\ \t\r\n\[\{\(\-]"""
-    dec_dashes_pattern = r"""&#8211;|&#8212;|&ndash;|&mdash;"""
+    dec_dashes_pattern = r"""&#8211;|&#8212;|&ndash;|–|&mdash;|—"""
 
     # Special case if the very first character is a quote
     # followed by punctuation at a non-word-break. Close the quotes by brute force:
-    s = sub_re(r"""^'(?=%s\\B)""" % (punct_pattern,), r"""&rsquo;""", s)
-    s = sub_re(r"""^"(?=%s\\B)""" % (punct_pattern,), r"""&rdquo;""", s)
+    s = sub_re(r"""^'(?=%s\\B)""" % (punct_pattern,), r"""’""", s)
+    s = sub_re(r"""^"(?=%s\\B)""" % (punct_pattern,), r"""”""", s)
 
     # Special case for double sets of quotes, e.g.:
     #   He said, "'Quoted' words in a larger quote."
-    s = sub_re(r""""'(?=\w)""", r"""&ldquo;&lsquo;""", s)
-    s = sub_re(r"""'"(?=\w)""", r"""&lsquo;&ldquo;""", s)
+    s = sub_re(r""""'(?=\w)""", r"""“‘""", s)
+    s = sub_re(r"""'"(?=\w)""", r"""‘“""", s)
 
     # Special case for decade abbreviations (the '80s):
-    s = sub_re(r"""(?<=\W)'(?=\d{2}s)""", r"""&rsquo;""", s)
+    s = sub_re(r"""(?<=\W)'(?=\d{2}s)""", r"""’""", s)
 
     # Get most opening single quotes:
     opening_single_quotes_regex = compile_re(r"""
@@ -83,30 +83,31 @@ def _smartify_quotes(s):
                 &nbsp;      |   # a non-breaking space entity, or
                 --          |   # dashes, or
                 &[mn]dash;  |   # named dash entities
+                –|—         |   # Unicode dashes
                 %s          |   # or decimal entities
                 &\#x201[34];    # or hex
             )
             '                 # the quote
             (?=\w)            # followed by a word character
             """ % (dec_dashes_pattern,), re.VERBOSE)
-    s = opening_single_quotes_regex.sub(r"""\1&lsquo;""", s)
+    s = opening_single_quotes_regex.sub(r"""\1‘""", s)
 
     closing_single_quotes_regex = compile_re(r"""
             (%s)
             '
             (?!\s | s\b | \d)
             """ % (close_pattern,), re.VERBOSE)
-    s = closing_single_quotes_regex.sub(r"""\1&rsquo;""", s)
+    s = closing_single_quotes_regex.sub(r"""\1’""", s)
 
     closing_single_quotes_regex = compile_re(r"""
             (%s)
             '
             (\s | s\b)
             """ % (close_pattern,), re.VERBOSE)
-    s = closing_single_quotes_regex.sub(r"""\1&rsquo;\2""", s)
+    s = closing_single_quotes_regex.sub(r"""\1’\2""", s)
 
     # Any remaining single quotes should be opening ones:
-    s = sub_re(r"""'""", r"""&lsquo;""", s)
+    s = sub_re(r"""'""", r"""‘""", s)
 
     # Get most opening double quotes:
     opening_double_quotes_regex = compile_re(r"""
@@ -115,13 +116,14 @@ def _smartify_quotes(s):
                 &nbsp;      |   # a non-breaking space entity, or
                 --          |   # dashes, or
                 &[mn]dash;  |   # named dash entities
+                –|—         |   # Unicode dashes
                 %s          |   # or decimal entities
                 &\#x201[34];    # or hex
             )
             "                 # the quote
             (?=\w)            # followed by a word character
             """ % (dec_dashes_pattern,), re.VERBOSE)
-    s = opening_double_quotes_regex.sub(r"""\1&ldquo;""", s)
+    s = opening_double_quotes_regex.sub(r"""\1“""", s)
 
     # Double closing quotes:
     closing_double_quotes_regex = compile_re(r"""
@@ -129,23 +131,23 @@ def _smartify_quotes(s):
             "
             (?=\s)
             """ % (close_pattern,), re.VERBOSE)
-    s = closing_double_quotes_regex.sub(r"""&rdquo;""", s)
+    s = closing_double_quotes_regex.sub(r"""”""", s)
 
     closing_double_quotes_regex = compile_re(r"""
             (%s)   # character that indicates the quote should be closing
             "
             """ % (close_pattern,), re.VERBOSE)
-    s = closing_double_quotes_regex.sub(r"""\1&rdquo;""", s)
+    s = closing_double_quotes_regex.sub(r"""\1”""", s)
 
     # Any remaining quotes should be opening ones.
-    s = sub_re(r'"', r"""&ldquo;""", s)
+    s = sub_re(r'"', r"""“""", s)
 
     return s
 
 
 def _smartify_dashes(s):
-    return sub_re('(?<!\<\!)--(?!\>)', '&mdash;', s)
+    return sub_re('(?<!\<\!)--(?!\>)', '—', s)
 
 
 def _smartify_ellipses(s):
-    return sub_re(r'\.\.\.|\. \. \.', '&hellip;', s)
+    return sub_re(r'\.\.\.|\. \. \.', '…', s)
