@@ -92,6 +92,15 @@ def test_smartified_ellipses_with_spaces():
     assert(s_smart == result)
 
 
+def test_more_than_three_periods_do_not_turn_into_ellipses():
+    s = 'No ellipses at the end....'
+    s_smart = 'No ellipses at the end....'
+
+    result = smartify_entities(s)
+
+    assert(s_smart == result)
+
+
 def test_smartified_dashes():
     s = 'Wait--let me make sure this works'
     s_smart = 'Wait—let me make sure this works'

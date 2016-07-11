@@ -155,4 +155,4 @@ def _smartify_dashes(s):
 
 
 def _smartify_ellipses(s):
-    return sub_re(r'\.\.\.|\. \. \.', '…', s)
+    return sub_re(r'(?<!\.)\.{3}(?!\.)|(?<!\. )\. \. \.(?! \.)', '…', s)
