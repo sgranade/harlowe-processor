@@ -1,5 +1,5 @@
 # coding: utf-8
-from harlowe import HarloweHook, HarloweLink, HarloweMacro, HarlowePassage, HarloweVariable, tokenize
+from harlowe import HarloweHook, HarloweLink, HarloweMacro, HarlowePassage, HarloweVariable, RawHtml, tokenize
 
 
 class TestTokenizingAndParsing:
@@ -77,6 +77,28 @@ class TestTokenizingAndParsing:
         assert(isinstance(results[0], HarloweHook))
         assert(isinstance(results[0].hook[0], HarloweHook))
         assert(['Nested hook'] == results[0].hook[0].hook)
+
+    def test_tokenize_handles_raw_html(self):
+        open_tag = '<div class="test">'
+        div_contents = 'contents'
+        close_tag = "</div>"
+        contents = open_tag+div_contents+close_tag
+
+        results, _, _ = tokenize(contents)
+
+        assert(isinstance(results[0], RawHtml))
+        assert(open_tag[1:-1] == results[0].tag)
+        assert(div_contents == results[1])
+        assert(isinstance(results[2], RawHtml))
+        assert(close_tag[1:-1] == results[2].tag)
+
+    def test_tokenize_handles_self_closing_raw_html(self):
+        contents = '<self_closing />'
+
+        results, _, _ = tokenize(contents)
+
+        assert(isinstance(results[0], RawHtml))
+        assert(contents[1:-1] == results[0].tag)
 
     def test_macro_names_can_have_hyphens(self):
         contents = '(tExt-style:)'
@@ -411,3 +433,14 @@ class TestRoundTrippingPassages:
         new_passage_str = str(passage_obj)
 
         assert(passage_str == new_passage_str)
+
+    def test_parsing_and_round_tripping_passage_with_html(self):
+        passage_str = '<tw-passagedata pid="1" name="Opening Scene" tags="40% fadein nosave" position="388,116">' \
+                      + 'Some simple html &lt;span class=&quot;spanClass&quot;&gt;like so&lt;/span&gt;surrounded by text' \
+                      + '</tw-passagedata>'
+
+        passage_obj = HarlowePassage.from_string(passage_str)
+        passage_obj.parse_contents()
+        new_passage_str = str(passage_obj)
+
+        assert (passage_str == new_passage_str)

@@ -33,6 +33,8 @@ _MACRO_NAME_PATTERN = r'((?P<name>[\w\-{0}\\/][\w\-{0}]*)|(?P<variable>{1})):'.f
 _HOOK_NAME_PATTERN = r'[\w\-{0}]*'.format(_UNICODE_LETTERS_PATTERN)
 _LINK_CONTENTS_PATTERN = r'((?P<desc1>[^]]+)\->(?P<dest1>[^]]+)|(?P<dest2>[^]]+?)<\-(?P<desc2>[^]]+)|(?P<contents>[^]]*))'
 
+_RAW_HTML_PATTERN = r"""(?P<contents>(?P<front_closing>/?)(?P<name>[a-zA-Z][\w\-]*)(?P<attribs>(?:"[^"]*"|'[^']*'|[^'">])*?)(?P<back_closing>/?))>"""
+
 
 # Append an item to an array either by a regular append or, if both the new
 # item and the last item in the array are strings, by appending the new string to
@@ -115,6 +117,7 @@ def _escape_harlowe_html(s):
         );                      # and then a semicolon
     ''', re.VERBOSE)
 
+    # TODO Do I need to do this next bit?
     #s = ampersand_re.sub("&amp;", s)
     s = s.replace("&", "&amp;")
     s = s.replace("<", "&lt;")
@@ -451,6 +454,39 @@ class HarloweMacro:
         return self
 
 
+class RawHtml:
+    """
+    Raw HTML inside a Harlowe story.
+
+    Attributes:
+        tag (str): The HTML tag, including its name and attributes.
+    """
+    def __init__(self, tag):
+        """
+        Create a RawHtml object.
+
+        Args:
+            tag (str): The raw HTML tag, without any angle brackets.
+        """
+        self.tag = tag
+
+    def __str__(self):
+        return _escape_harlowe_html('<'+self.tag+'>')
+
+    def modify_text(self, mod_fn):
+        """
+        Apply a function to the output text of all of the raw html's parsed contents (which, for raw html,
+        is none).
+
+        Args:
+            mod_fn ((str) -> str): The text-modifying function.
+
+        Returns:
+            The raw HTML object.
+        """
+        return self
+
+
 def _parse_variable(match, s):
     variable_re = compile_re(_VARIABLE_NAME_PATTERN)
     variable_match = variable_re.match(s)
@@ -584,11 +620,21 @@ def _parse_nested_brackets(match, s):
     return nested_contents, s
 
 
+def _parse_raw_html(match, s):
+    html_re = compile_re(_RAW_HTML_PATTERN)
+    html_match = html_re.match(s)
+    if html_match:
+        return [RawHtml(html_match.group('contents'))], s[html_match.end(0):]
+    else:
+        return [match], s
+
+
 _START_TOKENS = {'[[': [_parse_link, r'\[\[(?!\[)'],
                  '[': [_parse_hook, r'\[(?!\[)'],
                  '|': [_parse_hook, r'\|'],
                  '(': [_parse_macro, r'\('],
                  '$': [_parse_variable, r'\$'],
+                 '<': [_parse_raw_html, r'<'],
                  }
 
 
