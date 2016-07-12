@@ -274,7 +274,6 @@ class HarloweVariable:
         return self
 
 
-hook_count = 0  # TODO DEBUG
 class HarloweHook:
     """
     A Harlowe hook.
