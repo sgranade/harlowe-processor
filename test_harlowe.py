@@ -308,7 +308,7 @@ class TestTextModifications:
         assert('outer "MACRO" code' == macro_obj.code[0])
         assert(['inner "MACRO" code'] == macro_obj.code[1].code)
 
-    def test_rooms_recursively_modify_everything(self):
+    def test_passages_recursively_modify_everything(self):
         passage_str = '<tw-passagedata pid="1" name="Opening Scene" tags="40% fadein nosave" position="388,116">' \
               + '|tag&gt;[hook text plus (macro: "code")] $variable [[link text-&gt;passage]]' \
               + '</tw-passagedata>'
@@ -320,6 +320,19 @@ class TestTextModifications:
         assert([' "CODE"'] == passage_obj.parsed_contents[0].hook[1].code)
         assert('variable' == passage_obj.parsed_contents[2].name)
         assert(['LINK TEXT'] == passage_obj.parsed_contents[4].link_text)
+
+
+class TestSearchingForMatches:
+    def test_find_hook_in_passage(self):
+        passage_str = '<tw-passagedata pid="1" name="Opening Scene" tags="40% fadein nosave" position="388,116">' \
+                      + 'Text before [hook] text after' \
+                      + '</tw-passagedata>'
+        passage_obj = HarlowePassage.from_string(passage_str)
+
+        results = list(passage_obj.find_matches(lambda x: isinstance(x, HarloweHook)))
+
+        assert(1 == len(results))
+        assert('hook' == results[0].hook[0])
 
 
 class TestRoundTrippingPassages:
@@ -443,4 +456,4 @@ class TestRoundTrippingPassages:
         passage_obj.parse_contents()
         new_passage_str = str(passage_obj)
 
-        assert (passage_str == new_passage_str)
+        assert(passage_str == new_passage_str)

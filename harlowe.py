@@ -240,6 +240,26 @@ class HarlowePassage:
 
         return self
 
+    def find_matches(self, match_fn):
+        """
+        Yields all objects in the passage's contents that match a given criteria as defined by a function.
+
+        Args:
+            match_fn ((object) -> bool): A function that returns true if the object is a match.
+
+        Yields:
+            Objects that match the criteria.
+        """
+        if not self.parsed_contents:
+            self.parse_contents()
+
+        for item in self.parsed_contents:
+            if match_fn(item):
+                yield item
+            if not isinstance(item, text_type):
+                for subitem in item.find_matches(match_fn):
+                    yield subitem
+
 
 class HarloweVariable:
     """
@@ -272,6 +292,21 @@ class HarloweVariable:
             The Harlowe variable object.
         """
         return self
+
+    def find_matches(self, match_fn):
+        """
+        Yields all objects in the variable's contents that match a given criteria as defined by a function.
+        (Since variables have no contents, this is a no-op, and exists only to allow recursive iteration
+        of matches over all Harlowe objects.)
+
+        Args:
+            match_fn ((object) -> bool): A function that returns true if the object is a match.
+
+        Yields:
+            Objects that match the criteria.
+        """
+        return
+        yield  # Turns this function into a generator but that is empty
 
 
 class HarloweHook:
@@ -317,6 +352,23 @@ class HarloweHook:
         self.hook = [mod_fn(item) if isinstance(item, text_type) else item.modify_text(mod_fn)
                      for item in self.hook]
         return self
+
+    def find_matches(self, match_fn):
+        """
+        Yields all objects in the hook's contents that match a given criteria as defined by a function.
+
+        Args:
+            match_fn ((object) -> bool): A function that returns true if the object is a match.
+
+        Yields:
+            Objects that match the criteria.
+        """
+        for item in self.hook:
+            if match_fn(item):
+                yield item
+            if not isinstance(item, text_type):
+                for subitem in item.find_matches(match_fn):
+                    yield subitem
 
 
 class HarloweLink:
@@ -375,6 +427,23 @@ class HarloweLink:
             self.link_text = [mod_fn(item) if isinstance(item, text_type) else item.modify_text(mod_fn)
                               for item in self.link_text]
         return self
+
+    def find_matches(self, match_fn):
+        """
+        Yields all objects in the link's text contents that match a given criteria as defined by a function.
+
+        Args:
+            match_fn ((object) -> bool): A function that returns true if the object is a match.
+
+        Yields:
+            Objects that match the criteria.
+        """
+        for item in self.link_text:
+            if match_fn(item):
+                yield item
+            if not isinstance(item, text_type):
+                for subitem in item.find_matches(match_fn):
+                    yield subitem
 
 
 class HarloweMacro:
@@ -452,6 +521,23 @@ class HarloweMacro:
 
         return self
 
+    def find_matches(self, match_fn):
+        """
+        Yields all objects in the macro's contents that match a given criteria as defined by a function.
+
+        Args:
+            match_fn ((object) -> bool): A function that returns true if the object is a match.
+
+        Yields:
+            Objects that match the criteria.
+        """
+        for item in self.code:
+            if match_fn(item):
+                yield item
+            if not isinstance(item, text_type):
+                for subitem in item.find_matches(match_fn):
+                    yield subitem
+
 
 class RawHtml:
     """
@@ -484,6 +570,21 @@ class RawHtml:
             The raw HTML object.
         """
         return self
+
+    def find_matches(self, match_fn):
+        """
+        Yields all objects in the raw html's contents that match a given criteria as defined by a function.
+        (Since raw html objects have no contents, this is a no-op, and exists only to allow recursive iteration
+        of matches over all Harlowe objects.)
+
+        Args:
+            match_fn ((object) -> bool): A function that returns true if the object is a match.
+
+        Yields:
+            Objects that match the criteria.
+        """
+        return
+        yield  # Turns this function into a generator but that is empty
 
 
 def _parse_variable(match, s):
