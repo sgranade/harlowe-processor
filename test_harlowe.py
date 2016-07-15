@@ -299,6 +299,20 @@ class TestTextModifications:
 
         assert(['"This \'ends\' in a backslash\\\\"'] == macro_obj.code)
 
+    def test_goto_macro_contents_are_not_changed(self):
+        macro_obj = HarloweMacro('goto', ['"There\'s so much"'])
+
+        macro_obj.modify_text(lambda s: s.replace("'", '"'))
+
+        assert(['"There\'s so much"'] == macro_obj.code)
+
+    def test_display_macro_contents_are_not_changed(self):
+        macro_obj = HarloweMacro('display', ['"There\'s so much"'])
+
+        macro_obj.modify_text(lambda s: s.replace("'", '"'))
+
+        assert(['"There\'s so much"'] == macro_obj.code)
+
     def test_macro_contents_are_modified_recursively(self):
         inner_macro_obj = HarloweMacro('inner macro name', ['inner "macro" code'])
         macro_obj = HarloweMacro('outer macro name', ['outer "macro" code', inner_macro_obj])

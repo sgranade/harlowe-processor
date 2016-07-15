@@ -479,6 +479,8 @@ class HarloweMacro:
         str_list.append(')')
         return ''.join(str_list)
 
+    unmodifyable_macro_names = ['goto', 'display']
+
     def modify_text(self, mod_fn):
         """
         Apply a function to the output text of all of the macro's parsed code. Macro names are not changed.
@@ -489,6 +491,9 @@ class HarloweMacro:
         Returns:
             The Harlowe macro object.
         """
+        if self.canonical_name in self.unmodifyable_macro_names:
+            return self
+
         # This off-the-wall regex is adapted from http://stackoverflow.com/a/171499
         # because it handles backslashes inside of strings properly.
         # The more compact, completely unreadable version is: ((["'])((?:(?=(\\?))\4.)*?)\2)
