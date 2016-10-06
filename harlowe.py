@@ -877,3 +877,47 @@ def reconstruct_harlowe_html(story_attribs, other_elems, passages):
     story_html = before+passages_html+sep+after
 
     return story_html
+
+
+def build_link_graph(passages):
+    """
+    Builds the graph of what passages link to what other ones inside the HarlowePassage objects.
+
+    Args:
+        passages (dict): Passages, where the keys are the passage's names and the
+        values are the corresponding HarlowePassage objects.
+
+    Returns:
+        List of (HarloweObject, string) tuples containing any passages that had a bad link
+        in them and a string version of the bad link.
+    """
+    def is_link(item):
+        if isinstance(item, HarloweLink):
+            return True
+        if not isinstance(item, HarloweMacro):
+            return False
+        return item.canonical_name in ['linkgoto', 'goto']
+
+    missing_links = []
+
+    for passage_name, passage in passages.items():
+        for link in passage.find_matches(is_link):
+            if isinstance(link, HarloweLink):
+                try:
+                    linked_passage_name = ''.join([str(item) for item in link.passage_name])
+                except AttributeError:
+                    linked_passage_name = ''.join([str(item) for item in link.link_text])
+            else:  # Handle the macro
+                if link.canonical_name == 'linkgoto':
+                    # TODO this doesn't actually work. What I need is a JS-aware tokenizer
+                    # and separate macro arguments (i.e. comma-separated arguments)
+                    linked_passage_name = link.code[-1]
+                else:
+                    linked_passage_name = ''.join([str(item) for item in link.code])
+
+            try:
+                linked_passage = passages[linked_passage_name]
+                passage.destinations.add(linked_passage)
+                linked_passage.parents.add(passage)
+            except KeyError:
+                missing_links.append((passage, str(link)))
