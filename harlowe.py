@@ -910,12 +910,17 @@ def build_link_graph(passages):
                 except AttributeError:
                     linked_passage_name = ''.join([str(item) for item in link.link_text])
             else:  # Handle the macro
+                # TODO this doesn't actually cover all cases, since the macro's code can include
+                # Javascript and the like. Instead, what we need is a JS-aware tokenizer
+                code_str = ''.join([str(item) for item in link.code])
                 if link.canonical_name == 'linkgoto':
-                    # TODO this doesn't actually work. What I need is a JS-aware tokenizer
-                    # and separate macro arguments (i.e. comma-separated arguments)
-                    linked_passage_name = link.code[-1]
+                    # TODO If there are commas other than the one separating arguments, this will fail
+                    linked_passage_name = code_str.split(',', maxsplit=1)[-1]
                 else:
-                    linked_passage_name = ''.join([str(item) for item in link.code])
+                    linked_passage_name = code_str
+                # Strip whitespace and then the quote marks
+                linked_passage_name = linked_passage_name.strip()
+                linked_passage_name = linked_passage_name.strip(linked_passage_name[0])
 
             try:
                 linked_passage = passages[linked_passage_name]
