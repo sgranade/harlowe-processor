@@ -153,8 +153,8 @@ class HarlowePassage:
         parents (set of HarlowePassage): Other passages that can reach this passage in one step.
     """
     parsed_contents = None
-    destinations = set()
-    parents = set()
+    destinations = None
+    parents = None
 
     def __init__(self, pid, name, contents, tags, position):
         """
@@ -172,6 +172,8 @@ class HarlowePassage:
         self.contents = contents
         self.tags = tags
         self.position = position
+        self.destinations = set()
+        self.parents = set()
 
     @classmethod
     def from_string(cls, s):
