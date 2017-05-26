@@ -13,7 +13,7 @@ def test_smartifying():
     args.output = root+'-smart'+ext
 
     story_str = None
-    with open(args.input, 'rt') as infile:
+    with open(args.input, 'rt', encoding='utf8') as infile:
         story_str = infile.read()
 
     story_elems, other_elems, passages = harlowe.parse_harlowe_html(story_str)
@@ -34,7 +34,7 @@ def test_link_testing():
 
 
     story_str = None
-    with open(args.input, 'rt') as infile:
+    with open(args.input, 'rt', encoding='utf8') as infile:
         story_str = infile.read()
 
     story_elems, other_elems, passages = harlowe.parse_harlowe_html(story_str)

@@ -1,5 +1,4 @@
 import argparse
-import io
 import os.path
 
 import harlowe
@@ -15,7 +14,6 @@ if not args.output:
     root, ext = os.path.splitext(args.input)
     args.output = root+'-smart'+ext
 
-story_str = None
 with open(args.input, 'rt', encoding='utf8') as infile:
     story_str = infile.read()
 
