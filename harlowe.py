@@ -928,3 +928,5 @@ def build_link_graph(passages):
                 linked_passage.parents.add(passage)
             except KeyError:
                 missing_links.append((passage, str(link)))
+
+    return missing_links

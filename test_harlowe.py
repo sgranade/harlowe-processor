@@ -495,9 +495,9 @@ class TestPassageLinkGraphBuilding:
 
             missing_links = build_link_graph(passages)
 
-            assert (not missing_links)
-            assert ({room_2} == room_1.destinations)
-            assert ({room_1} == room_2.parents)
+            assert(not missing_links)
+            assert({room_2} == room_1.destinations)
+            assert({room_1} == room_2.parents)
 
     def test_link_goto_macro(self):
         room_1 = HarlowePassage('1', 'room 1', '(link-goto: "next room", "room 2")', '', '1,1')
@@ -512,3 +512,27 @@ class TestPassageLinkGraphBuilding:
         assert({room_1} == room_2.parents)
         assert({room_1} == room_2.destinations)
         assert({room_2} == room_1.parents)
+
+    def test_incorrect_simple_passage_link_is_caught(self):
+        room_1 = HarlowePassage('1', 'room 1', '[[room 3]]', '', '1,1')
+        passages = {'room 1': room_1}
+
+        missing_links = build_link_graph(passages)
+
+        assert([(room_1, '[[room 3]]')] == missing_links)
+
+    def test_incorrect_link_with_text_and_destination_is_caught(self):
+        room_1 = HarlowePassage('1', 'room 1', '[[next room->room 2]]', '', '1,1')
+        passages = {'room 1': room_1}
+
+        missing_links = build_link_graph(passages)
+
+        assert([(room_1, '[[next room-&gt;room 2]]')] == missing_links)
+
+    def test_incorrect_link_goto_is_caught(self):
+        room_1 = HarlowePassage('1', 'room 1', '(link-goto: "next room", "room 2")', '', '1,1')
+        passages = {'room 1': room_1}
+
+        missing_links = build_link_graph(passages)
+
+        assert([(room_1, '(link-goto: &quot;next room&quot;, &quot;room 2&quot;)')] == missing_links)
