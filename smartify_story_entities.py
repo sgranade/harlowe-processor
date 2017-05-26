@@ -1,4 +1,5 @@
 import argparse
+import io
 import os.path
 
 import harlowe
@@ -15,7 +16,7 @@ if not args.output:
     args.output = root+'-smart'+ext
 
 story_str = None
-with open(args.input, 'rt') as infile:
+with open(args.input, 'rt', encoding='utf8') as infile:
     story_str = infile.read()
 
 story_elems, other_elems, passages = harlowe.parse_harlowe_html(story_str)
@@ -25,6 +26,5 @@ for _, passage_obj in passages.items():
 
 modified_story_str = harlowe.reconstruct_harlowe_html(story_elems, other_elems, passages)
 
-with open(args.output, 'wt') as outfile:
+with open(args.output, 'wt', encoding='utf8') as outfile:
     outfile.write(modified_story_str)
-
