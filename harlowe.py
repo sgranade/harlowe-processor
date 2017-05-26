@@ -907,7 +907,7 @@ def build_link_graph(passages):
             if isinstance(link, HarloweLink):
                 try:
                     linked_passage_name = ''.join([str(item) for item in link.passage_name])
-                except AttributeError:
+                except TypeError:  # If there is no passage name, then passage_name is None
                     linked_passage_name = ''.join([str(item) for item in link.link_text])
             else:  # Handle the macro
                 # TODO this doesn't actually cover all cases, since the macro's code can include

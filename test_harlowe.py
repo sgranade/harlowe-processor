@@ -475,8 +475,8 @@ class TestRoundTrippingPassages:
 
 class TestPassageLinkGraphBuilding:
     def test_simple_passage_link(self):
-        room_1 = HarlowePassage(1, 'room 1', '[[next room->room 2]]', '', '1,1')
-        room_2 = HarlowePassage(2, 'room 2', 'The end', '', '10, 1')
+        room_1 = HarlowePassage('1', 'room 1', '[[room 2]]', '', '1,1')
+        room_2 = HarlowePassage('2', 'room 2', 'The end', '', '10, 1')
         passages = {'room 1': room_1,
                     'room 2': room_2}
 
@@ -486,10 +486,22 @@ class TestPassageLinkGraphBuilding:
         assert({room_2} == room_1.destinations)
         assert({room_1} == room_2.parents)
 
+    def test_link_with_text_and_destination(self):
+        def test_simple_passage_link(self):
+            room_1 = HarlowePassage('1', 'room 1', '[[next room->room 2]]', '', '1,1')
+            room_2 = HarlowePassage('2', 'room 2', 'The end', '', '10, 1')
+            passages = {'room 1': room_1,
+                        'room 2': room_2}
+
+            missing_links = build_link_graph(passages)
+
+            assert (not missing_links)
+            assert ({room_2} == room_1.destinations)
+            assert ({room_1} == room_2.parents)
 
     def test_link_goto_macro(self):
-        room_1 = HarlowePassage(1, 'room 1', '(link-goto: "next room", "room 2")', '', '1,1')
-        room_2 = HarlowePassage(2, 'room 2', 'Go back to (link-goto: "room 1"', '', '10, 1')
+        room_1 = HarlowePassage('1', 'room 1', '(link-goto: "next room", "room 2")', '', '1,1')
+        room_2 = HarlowePassage('2', 'room 2', 'Go back to (link-goto: "room 1"', '', '10, 1')
         passages = {'room 1': room_1,
                     'room 2': room_2}
 
